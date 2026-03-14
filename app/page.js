@@ -207,7 +207,7 @@ function AgentStepIndicator({ steps, isLoading, currentStep }) {
             </div>
           </motion.div>
         );
-      })};
+      })}
     </div>
   );
 }
