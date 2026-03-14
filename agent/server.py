@@ -114,8 +114,7 @@ async def run_flagr_agent(transaction: dict) -> dict:
     
     # Check if GOOGLE_API_KEY is set
     if not os.environ.get("GOOGLE_API_KEY"):
-        print("GOOGLE_API_KEY not set, using mock analysis")
-        return generate_mock_analysis(transaction)
+        raise HTTPException(status_code=500, detail="GOOGLE_API_KEY not configured")
     
     try:
         from flagr_agent import root_agent
@@ -175,125 +174,18 @@ Run all 4 agents and return the final action recommendation as JSON."""
                 # Clean up response if it has markdown
                 clean_text = response_text.replace("```json", "").replace("```", "").strip()
                 result = json.loads(clean_text)
-                result["mock"] = False
                 return result
             except json.JSONDecodeError:
-                return {"raw_response": response_text, "error": "Could not parse JSON", "mock": False}
+                return {"raw_response": response_text, "error": "Could not parse JSON"}
         
-        return {"error": "No response from agent", "mock": False}
+        raise HTTPException(status_code=500, detail="No response from agent")
         
+    except HTTPException:
+        raise
     except ImportError as e:
-        print(f"Import error: {e}")
-        # Fallback to mock analysis if google-adk is not available
-        return generate_mock_analysis(transaction)
+        raise HTTPException(status_code=500, detail=f"Import error: {str(e)}")
     except Exception as e:
-        print(f"Agent error: {e}")
-        return generate_mock_analysis(transaction)
-
-def generate_mock_analysis(transaction: dict) -> dict:
-    """Generate mock analysis when agent is unavailable"""
-    import random
-    import string
-    from datetime import datetime
-    
-    amount = float(transaction.get('amount', 0))
-    location = transaction.get('location', 'US')
-    time_seconds = float(transaction.get('time_seconds', 43200))
-    merchant = transaction.get('merchant', 'Unknown')
-    
-    # Calculate risk score based on factors
-    risk_score = 20
-    triggered_signals = []
-    
-    # Amount risk
-    if amount > 5000:
-        risk_score += 30
-        triggered_signals.append("High transaction amount exceeds threshold")
-    elif amount > 1000:
-        risk_score += 15
-        triggered_signals.append("Elevated transaction amount")
-    
-    # Location risk
-    high_risk_locations = ['RU', 'NG', 'KY', 'CN', 'UA', 'PH']
-    medium_risk_locations = ['MX', 'HK', 'AE', 'EU']
-    if location in high_risk_locations:
-        risk_score += 25
-        triggered_signals.append(f"High-risk geographic location: {location}")
-    elif location in medium_risk_locations:
-        risk_score += 10
-        triggered_signals.append(f"Moderate-risk location: {location}")
-    
-    # Time risk
-    hours = int(time_seconds / 3600)
-    if 0 <= hours <= 5:
-        risk_score += 20
-        triggered_signals.append(f"Unusual transaction time: {hours}:00")
-    
-    # Merchant risk
-    risky_merchants = ['Unknown', 'Crypto', 'Wire Transfer', 'Gaming', 'Digital Currency']
-    if any(rm.lower() in merchant.lower() for rm in risky_merchants):
-        risk_score += 20
-        triggered_signals.append(f"High-risk merchant category: {merchant}")
-    
-    risk_score = min(risk_score, 100)
-    
-    # Determine risk level
-    if risk_score >= 90:
-        risk_level = "CRITICAL"
-        recommended_action = "BLOCK"
-        account_status = "SUSPEND"
-        case_priority = "URGENT"
-    elif risk_score >= 66:
-        risk_level = "HIGH"
-        recommended_action = "BLOCK"
-        account_status = "FREEZE"
-        case_priority = "HIGH"
-    elif risk_score >= 41:
-        risk_level = "MEDIUM"
-        recommended_action = "REVIEW"
-        account_status = "MONITOR"
-        case_priority = "MEDIUM"
-    else:
-        risk_level = "LOW"
-        recommended_action = "APPROVE"
-        account_status = "NO_CHANGE"
-        case_priority = "LOW"
-    
-    report_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
-    
-    return {
-        "report_id": report_id,
-        "risk_score": risk_score,
-        "risk_level": risk_level,
-        "confidence": round(85 + random.random() * 14, 2),
-        "triggered_signals": triggered_signals,
-        "reasoning": f"This transaction exhibits {len(triggered_signals)} risk indicator(s). " + 
-                     " ".join(triggered_signals[:2]) + 
-                     f" Based on our multi-agent analysis pipeline, we recommend {recommended_action.lower()}.",
-        "executive_summary": f"{risk_level} risk transaction requiring {recommended_action.lower()} action.",
-        "detailed_findings": f"Transaction analysis completed. Risk score: {risk_score}/100. " +
-                            f"Primary concerns: {', '.join(triggered_signals[:3]) if triggered_signals else 'None identified'}. " +
-                            f"Recommended action: {recommended_action}.",
-        "compliance_flags": ["BSA/AML Review", "FFIEC Guidelines", "SAR Filing Requirements"] if risk_score >= 66 else [],
-        "recommended_action": recommended_action,
-        "immediate_actions": [
-            "Temporarily freeze transaction" if risk_score >= 66 else "Continue monitoring",
-            "Contact account holder for verification" if risk_score >= 41 else "No action required",
-            "Review last 30 days of account activity" if risk_score >= 41 else "Standard processing"
-        ],
-        "customer_notification": f"We've detected unusual activity on your account. For your security, we've {'placed a hold on' if risk_score >= 66 else 'flagged'} a recent transaction. Please contact our fraud prevention team." if risk_score >= 41 else "No notification required.",
-        "account_status": account_status,
-        "escalate_to_human": risk_score >= 41,
-        "escalation_reason": f"Risk score {risk_score} exceeds threshold for automatic approval" if risk_score >= 41 else None,
-        "case_priority": case_priority,
-        "agent_steps": [
-            {"agent": "Anomaly Detector", "status": "complete", "result": f"{len(triggered_signals)} anomalies detected"},
-            {"agent": "Reasoning Agent", "status": "complete", "result": f"{risk_level} fraud probability"},
-            {"agent": "Report Generator", "status": "complete", "result": "Compliance report generated"},
-            {"agent": "Action Recommender", "status": "complete", "result": f"{recommended_action} recommended"}
-        ],
-        "mock": True
-    }
+        raise HTTPException(status_code=500, detail=f"Agent error: {str(e)}")
 
 @app.get("/")
 async def root():
@@ -325,12 +217,9 @@ async def get_transactions():
 @app.post("/api/analyze")
 async def analyze_transaction(request: AnalyzeRequest):
     """Analyze a transaction using the Flagr multi-agent pipeline"""
-    try:
-        transaction_dict = request.transaction.model_dump()
-        result = await run_flagr_agent(transaction_dict)
-        return {"analysis": result}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    transaction_dict = request.transaction.model_dump()
+    result = await run_flagr_agent(transaction_dict)
+    return {"analysis": result}
 
 @app.get("/api/stats")
 async def get_stats():
