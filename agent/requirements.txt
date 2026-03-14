@@ -1,0 +1,6 @@
+google-adk
+google-cloud-aiplatform
+kagglehub
+pandas
+fastapi
+uvicorn
