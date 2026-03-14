@@ -50,7 +50,12 @@ def load_kaggle_transactions():
     try:
         import kagglehub
         import pandas as pd
-        
+
+        # Ensure kagglehub picks up the token from environment
+        kaggle_token = os.environ.get("KAGGLE_TOKEN", "")
+        if kaggle_token:
+            os.environ["KAGGLE_TOKEN"] = kaggle_token
+
         # Download the dataset
         path = kagglehub.dataset_download("mlg-ulb/creditcardfraud")
         df = pd.read_csv(f"{path}/creditcard.csv")

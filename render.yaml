@@ -10,7 +10,7 @@ services:
         sync: false
       - key: KAGGLE_USERNAME
         sync: false
-      - key: KAGGLE_KEY
+      - key: KAGGLE_TOKEN
         sync: false
 
   - type: web
