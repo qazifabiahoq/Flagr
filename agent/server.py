@@ -51,10 +51,22 @@ def load_kaggle_transactions():
         import kagglehub
         import pandas as pd
 
-        # Ensure kagglehub picks up the token from environment
+        # Authenticate with Kaggle using available credentials
         kaggle_token = os.environ.get("KAGGLE_TOKEN", "")
+        kaggle_username = os.environ.get("KAGGLE_USERNAME", "")
+        kaggle_key = os.environ.get("KAGGLE_KEY", "")
+
         if kaggle_token:
-            os.environ["KAGGLE_TOKEN"] = kaggle_token
+            # New-style Access Token (KGAT_*)
+            kagglehub.login(token=kaggle_token)
+        elif kaggle_username and kaggle_key:
+            # Legacy API key: write ~/.kaggle/kaggle.json
+            import pathlib, json as _json
+            kaggle_dir = pathlib.Path.home() / ".kaggle"
+            kaggle_dir.mkdir(exist_ok=True)
+            creds_file = kaggle_dir / "kaggle.json"
+            creds_file.write_text(_json.dumps({"username": kaggle_username, "key": kaggle_key}))
+            creds_file.chmod(0o600)
 
         # Download the dataset
         path = kagglehub.dataset_download("mlg-ulb/creditcardfraud")
@@ -95,24 +107,7 @@ def load_kaggle_transactions():
         
     except Exception as e:
         print(f"Error loading Kaggle data: {e}")
-        # Return mock data if Kaggle fails
-        return get_mock_transactions()
-
-def get_mock_transactions():
-    """Fallback mock transactions if Kaggle is unavailable"""
-    return [
-        {
-            "transaction_id": f"TXN-{1000 + i}",
-            "account_id": f"ACC-{5000 + i}",
-            "amount": [2489.50, 45.99, 8750.00, 129.00, 3299.99, 67.50, 15000.00, 234.00, 4500.00, 89.99][i % 10],
-            "time_seconds": [84600, 32400, 3600, 43200, 7200, 54000, 10800, 61200, 14400, 68400][i % 10],
-            "merchant": ["Global Electronics Ltd", "Amazon.com", "Unknown Merchant", "Spotify Premium", "Crypto Exchange XYZ", "Uber Technologies", "Wire Transfer - Offshore", "Target Stores", "Gaming Credits Inc", "Netflix Inc"][i % 10],
-            "location": ["EU", "US", "RU", "US", "CN", "US", "KY", "US", "UA", "CA"][i % 10],
-            "device_ip": f"192.168.{i}.1",
-            "actual_label": 1 if i % 2 == 0 else 0
-        }
-        for i in range(20)
-    ]
+        raise
 
 async def run_flagr_agent(transaction: dict) -> dict:
     """Run the Flagr multi-agent pipeline on a transaction"""
@@ -207,7 +202,9 @@ async def health():
     """Health check endpoint"""
     return {
         "status": "healthy",
-        "google_api_key_set": bool(os.environ.get("GOOGLE_API_KEY"))
+        "google_api_key_set": bool(os.environ.get("GOOGLE_API_KEY")),
+        "kaggle_token_set": bool(os.environ.get("KAGGLE_TOKEN")),
+        "kaggle_username_set": bool(os.environ.get("KAGGLE_USERNAME")),
     }
 
 @app.get("/api/transactions")
