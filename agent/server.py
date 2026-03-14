@@ -1,8 +1,10 @@
+import os
+os.environ["GOOGLE_API_KEY"] = os.environ.get("GOOGLE_API_KEY", "")
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
-import os
 import json
 import asyncio
 
@@ -109,6 +111,12 @@ def get_mock_transactions():
 
 async def run_flagr_agent(transaction: dict) -> dict:
     """Run the Flagr multi-agent pipeline on a transaction"""
+    
+    # Check if GOOGLE_API_KEY is set
+    if not os.environ.get("GOOGLE_API_KEY"):
+        print("GOOGLE_API_KEY not set, using mock analysis")
+        return generate_mock_analysis(transaction)
+    
     try:
         from flagr_agent import root_agent
         from google.adk.runners import Runner
@@ -166,11 +174,13 @@ Run all 4 agents and return the final action recommendation as JSON."""
             try:
                 # Clean up response if it has markdown
                 clean_text = response_text.replace("```json", "").replace("```", "").strip()
-                return json.loads(clean_text)
+                result = json.loads(clean_text)
+                result["mock"] = False
+                return result
             except json.JSONDecodeError:
-                return {"raw_response": response_text, "error": "Could not parse JSON"}
+                return {"raw_response": response_text, "error": "Could not parse JSON", "mock": False}
         
-        return {"error": "No response from agent"}
+        return {"error": "No response from agent", "mock": False}
         
     except ImportError as e:
         print(f"Import error: {e}")
@@ -291,13 +301,17 @@ async def root():
     return {
         "service": "Flagr Agent API",
         "status": "healthy",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "google_api_key_set": bool(os.environ.get("GOOGLE_API_KEY"))
     }
 
 @app.get("/api/health")
 async def health():
     """Health check endpoint"""
-    return {"status": "healthy"}
+    return {
+        "status": "healthy",
+        "google_api_key_set": bool(os.environ.get("GOOGLE_API_KEY"))
+    }
 
 @app.get("/api/transactions")
 async def get_transactions():
