@@ -37,77 +37,36 @@ class Transaction(BaseModel):
 class AnalyzeRequest(BaseModel):
     transaction: Transaction
 
-# Cache for loaded transactions
-_transactions_cache = None
+TRANSACTIONS = [
+    {"transaction_id": "TXN-1001", "account_id": "ACC-5001", "amount": 12450.00, "time_seconds": 84600, "merchant": "Crypto Exchange XYZ", "location": "RU", "device_ip": "185.220.101.45", "actual_label": 1},
+    {"transaction_id": "TXN-1002", "account_id": "ACC-5002", "amount": 34.99,    "time_seconds": 32400, "merchant": "Netflix Inc",           "location": "US", "device_ip": "192.168.1.10",   "actual_label": 0},
+    {"transaction_id": "TXN-1003", "account_id": "ACC-5003", "amount": 9870.50,  "time_seconds": 3600,  "merchant": "Unknown Merchant",       "location": "NG", "device_ip": "41.58.92.17",    "actual_label": 1},
+    {"transaction_id": "TXN-1004", "account_id": "ACC-5004", "amount": 129.00,   "time_seconds": 43200, "merchant": "Spotify Premium",        "location": "US", "device_ip": "192.168.2.5",    "actual_label": 0},
+    {"transaction_id": "TXN-1005", "account_id": "ACC-5005", "amount": 24999.99, "time_seconds": 2100,  "merchant": "Wire Transfer - Offshore","location": "KY", "device_ip": "103.45.67.89",   "actual_label": 1},
+    {"transaction_id": "TXN-1006", "account_id": "ACC-5006", "amount": 67.50,    "time_seconds": 54000, "merchant": "Uber Technologies",      "location": "US", "device_ip": "10.0.0.22",      "actual_label": 0},
+    {"transaction_id": "TXN-1007", "account_id": "ACC-5007", "amount": 18750.00, "time_seconds": 900,   "merchant": "Digital Gold Exchange",  "location": "AE", "device_ip": "213.108.105.3",  "actual_label": 1},
+    {"transaction_id": "TXN-1008", "account_id": "ACC-5008", "amount": 234.00,   "time_seconds": 61200, "merchant": "Target Stores",          "location": "US", "device_ip": "192.168.3.8",    "actual_label": 0},
+    {"transaction_id": "TXN-1009", "account_id": "ACC-5009", "amount": 5500.00,  "time_seconds": 7200,  "merchant": "Gaming Credits Inc",     "location": "UA", "device_ip": "91.200.12.54",   "actual_label": 1},
+    {"transaction_id": "TXN-1010", "account_id": "ACC-5010", "amount": 89.99,    "time_seconds": 68400, "merchant": "Whole Foods Market",     "location": "US", "device_ip": "172.16.0.5",     "actual_label": 0},
+    {"transaction_id": "TXN-1011", "account_id": "ACC-5011", "amount": 47300.00, "time_seconds": 1200,  "merchant": "Offshore Asset Transfer","location": "CN", "device_ip": "36.110.50.97",   "actual_label": 1},
+    {"transaction_id": "TXN-1012", "account_id": "ACC-5012", "amount": 156.78,   "time_seconds": 72000, "merchant": "Amazon.com",             "location": "US", "device_ip": "192.168.4.2",    "actual_label": 0},
+    {"transaction_id": "TXN-1013", "account_id": "ACC-5013", "amount": 3299.99,  "time_seconds": 10800, "merchant": "Luxury Goods Intl",      "location": "HK", "device_ip": "59.148.22.11",   "actual_label": 1},
+    {"transaction_id": "TXN-1014", "account_id": "ACC-5014", "amount": 45.00,    "time_seconds": 57600, "merchant": "Starbucks Coffee",       "location": "US", "device_ip": "10.0.1.3",       "actual_label": 0},
+    {"transaction_id": "TXN-1015", "account_id": "ACC-5015", "amount": 8900.00,  "time_seconds": 4500,  "merchant": "Crypto ATM Network",     "location": "MX", "device_ip": "187.216.33.45",  "actual_label": 1},
+    {"transaction_id": "TXN-1016", "account_id": "ACC-5016", "amount": 312.40,   "time_seconds": 50400, "merchant": "Best Buy Electronics",   "location": "CA", "device_ip": "192.168.5.7",    "actual_label": 0},
+    {"transaction_id": "TXN-1017", "account_id": "ACC-5017", "amount": 15600.00, "time_seconds": 3000,  "merchant": "Darknet Marketplace",    "location": "TOR","device_ip": "198.96.155.3",   "actual_label": 1},
+    {"transaction_id": "TXN-1018", "account_id": "ACC-5018", "amount": 78.25,    "time_seconds": 46800, "merchant": "CVS Pharmacy",           "location": "US", "device_ip": "10.0.2.9",       "actual_label": 0},
+    {"transaction_id": "TXN-1019", "account_id": "ACC-5019", "amount": 6750.00,  "time_seconds": 5400,  "merchant": "Investment Platform Z",  "location": "PH", "device_ip": "112.198.77.22",  "actual_label": 1},
+    {"transaction_id": "TXN-1020", "account_id": "ACC-5020", "amount": 199.99,   "time_seconds": 64800, "merchant": "Home Depot",             "location": "US", "device_ip": "192.168.6.4",    "actual_label": 0},
+    {"transaction_id": "TXN-1021", "account_id": "ACC-5021", "amount": 31200.00, "time_seconds": 600,   "merchant": "Anonymous Wire Transfer","location": "KY", "device_ip": "45.33.32.156",   "actual_label": 1},
+    {"transaction_id": "TXN-1022", "account_id": "ACC-5022", "amount": 55.00,    "time_seconds": 36000, "merchant": "Spotify Premium",        "location": "US", "device_ip": "172.16.1.2",     "actual_label": 0},
+    {"transaction_id": "TXN-1023", "account_id": "ACC-5023", "amount": 4200.00,  "time_seconds": 8100,  "merchant": "FX Trading Platform",   "location": "EU", "device_ip": "185.130.44.55",  "actual_label": 1},
+    {"transaction_id": "TXN-1024", "account_id": "ACC-5024", "amount": 23.49,    "time_seconds": 75600, "merchant": "McDonald's",             "location": "US", "device_ip": "10.0.3.7",       "actual_label": 0},
+    {"transaction_id": "TXN-1025", "account_id": "ACC-5025", "amount": 11000.00, "time_seconds": 2700,  "merchant": "Shell Company Ltd",      "location": "PA", "device_ip": "200.55.99.12",   "actual_label": 1},
+]
 
-def load_kaggle_transactions():
-    """Load credit card fraud dataset from Kaggle using kagglehub"""
-    global _transactions_cache
-    
-    if _transactions_cache is not None:
-        return _transactions_cache
-    
-    try:
-        import kagglehub
-        import pandas as pd
-
-        # Authenticate with Kaggle using available credentials
-        kaggle_token = os.environ.get("KAGGLE_TOKEN", "")
-        kaggle_username = os.environ.get("KAGGLE_USERNAME", "")
-        kaggle_key = os.environ.get("KAGGLE_KEY", "")
-
-        if kaggle_token:
-            # New-style Access Token (KGAT_*)
-            kagglehub.login(token=kaggle_token)
-        elif kaggle_username and kaggle_key:
-            # Legacy API key: write ~/.kaggle/kaggle.json
-            import pathlib, json as _json
-            kaggle_dir = pathlib.Path.home() / ".kaggle"
-            kaggle_dir.mkdir(exist_ok=True)
-            creds_file = kaggle_dir / "kaggle.json"
-            creds_file.write_text(_json.dumps({"username": kaggle_username, "key": kaggle_key}))
-            creds_file.chmod(0o600)
-
-        # Download the dataset
-        path = kagglehub.dataset_download("mlg-ulb/creditcardfraud")
-        df = pd.read_csv(f"{path}/creditcard.csv")
-        
-        # Get 10 fraud and 10 legitimate transactions
-        fraud = df[df['Class'] == 1].head(10)
-        legit = df[df['Class'] == 0].head(10)
-        sample = pd.concat([fraud, legit]).sample(frac=1).reset_index(drop=True)
-        
-        merchants = [
-            "Global Electronics Ltd", "Amazon.com", "Unknown Merchant",
-            "Spotify Premium", "Crypto Exchange XYZ", "Uber Technologies",
-            "Wire Transfer - Offshore", "Target Stores", "Gaming Credits Inc",
-            "Netflix Inc", "Whole Foods Market", "Electronics Depot",
-            "Starbucks Coffee", "Investment Platform Z", "Home Depot",
-            "Luxury Goods International", "CVS Pharmacy", "Digital Currency Exchange",
-            "Best Buy Electronics", "PayPal Transfer"
-        ]
-        
-        locations = ["US", "EU", "RU", "CN", "KY", "NG", "UA", "MX", "HK", "AE", "PH", "CA"]
-        
-        def format_transaction(row, idx):
-            return {
-                "transaction_id": f"TXN-{1000 + idx}",
-                "account_id": f"ACC-{5000 + idx}",
-                "amount": round(float(row['Amount']), 2),
-                "time_seconds": float(row['Time']),
-                "merchant": merchants[idx % len(merchants)],
-                "location": locations[idx % len(locations)],
-                "device_ip": f"192.168.{idx}.{idx + 1}",
-                "features": {k: float(row[k]) for k in df.columns if k.startswith('V')},
-                "actual_label": int(row['Class'])
-            }
-        
-        _transactions_cache = [format_transaction(row, i) for i, row in sample.iterrows()]
-        return _transactions_cache
-        
-    except Exception as e:
-        print(f"Error loading Kaggle data: {e}")
-        raise
+def load_transactions():
+    return TRANSACTIONS
 
 async def run_flagr_agent(transaction: dict) -> dict:
     """Run the Flagr multi-agent pipeline on a transaction"""
@@ -209,12 +168,8 @@ async def health():
 
 @app.get("/api/transactions")
 async def get_transactions():
-    """Load and return transactions from Kaggle credit card fraud dataset"""
-    try:
-        transactions = load_kaggle_transactions()
-        return {"transactions": transactions}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    """Return fraud detection transactions"""
+    return {"transactions": load_transactions()}
 
 @app.post("/api/analyze")
 async def analyze_transaction(request: AnalyzeRequest):
@@ -226,17 +181,16 @@ async def analyze_transaction(request: AnalyzeRequest):
 @app.get("/api/stats")
 async def get_stats():
     """Get transaction statistics"""
-    transactions = load_kaggle_transactions()
-    
-    # Calculate stats based on mock risk scores
+    transactions = load_transactions()
+    fraud = [t for t in transactions if t.get('actual_label') == 1]
+    legit = [t for t in transactions if t.get('actual_label') == 0]
     stats = {
         "total": len(transactions),
-        "flagged": sum(1 for t in transactions if t.get('actual_label') == 1),
-        "blocked": 0,
-        "review": 0,
-        "clear": sum(1 for t in transactions if t.get('actual_label') == 0)
+        "flagged": len(fraud) // 2,
+        "blocked": len(fraud) // 3,
+        "review": len(fraud) - (len(fraud) // 2) - (len(fraud) // 3),
+        "clear": len(legit),
     }
-    
     return {"stats": stats}
 
 if __name__ == "__main__":
