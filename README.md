@@ -4,6 +4,9 @@ AI-powered multi-agent fraud intelligence platform for bank risk and compliance 
 
 Live Demo: https://flagr-xi.vercel.app
 
+Youtube: https://youtu.be/X5xCgyFXfF0?si=0TGpU13hDoFi8ryz
+
+
 ---
 
 ## The Problem
