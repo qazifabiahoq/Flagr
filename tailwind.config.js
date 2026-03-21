@@ -18,17 +18,25 @@ module.exports = {
     },
     extend: {
       colors: {
+        // Professional banking color palette
+        // navy-900 = page background, navy-800 = card/header, navy-700 = input/hover, navy-600 = borders
         navy: {
-          900: '#0A0F1E',
-          800: '#0D1425',
-          700: '#111B32',
-          600: '#162240',
+          900: '#F4F7FA',
+          800: '#FFFFFF',
+          700: '#EEF2F7',
+          600: '#DDE3ED',
+        },
+        // Bank brand blue (RBC/TD professional style)
+        bank: {
+          blue: '#003087',
+          'blue-light': '#0051A5',
+          'blue-faint': '#EBF0F8',
         },
         risk: {
-          critical: '#E63946',
-          high: '#E63946',
-          medium: '#F4A261',
-          low: '#2DC653',
+          critical: '#CC1F1F',
+          high: '#CC1F1F',
+          medium: '#D97706',
+          low: '#15803D',
         },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
