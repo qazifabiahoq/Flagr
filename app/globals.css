@@ -13,39 +13,40 @@ body {
 
 @layer base {
   :root {
-    --background: 222 47% 6%;
-    --foreground: 0 0% 100%;
-    --card: 222 47% 8%;
-    --card-foreground: 0 0% 100%;
-    --popover: 222 47% 8%;
-    --popover-foreground: 0 0% 100%;
-    --primary: 355 82% 56%;
+    /* Professional banking white theme */
+    --background: 210 20% 97%;
+    --foreground: 220 40% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 40% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 40% 12%;
+    --primary: 213 86% 27%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 222 47% 12%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 222 47% 15%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 222 47% 15%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 355 82% 56%;
+    --secondary: 210 18% 94%;
+    --secondary-foreground: 220 40% 20%;
+    --muted: 210 18% 94%;
+    --muted-foreground: 220 15% 46%;
+    --accent: 213 40% 92%;
+    --accent-foreground: 213 86% 27%;
+    --destructive: 355 72% 44%;
     --destructive-foreground: 0 0% 100%;
-    --border: 222 30% 18%;
-    --input: 222 30% 18%;
-    --ring: 355 82% 56%;
+    --border: 220 15% 88%;
+    --input: 220 15% 88%;
+    --ring: 213 86% 27%;
     --radius: 0.5rem;
-    --chart-1: 355 82% 56%;
-    --chart-2: 32 95% 67%;
-    --chart-3: 142 69% 49%;
-    --chart-4: 220 70% 50%;
-    --chart-5: 280 65% 60%;
-    --sidebar-background: 222 47% 6%;
+    --chart-1: 355 72% 44%;
+    --chart-2: 32 95% 55%;
+    --chart-3: 142 60% 38%;
+    --chart-4: 213 86% 40%;
+    --chart-5: 280 55% 50%;
+    --sidebar-background: 213 86% 22%;
     --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 355 82% 56%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 47% 12%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 213 86% 22%;
+    --sidebar-accent: 213 60% 30%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 222 30% 18%;
-    --sidebar-ring: 355 82% 56%;
+    --sidebar-border: 213 60% 30%;
+    --sidebar-ring: 0 0% 100%;
   }
 }
 
@@ -68,7 +69,7 @@ body {
 }
 
 .animate-pulse-red {
-  animation: pulse-red 1s ease-in-out infinite;
+  animation: pulse-red 1.2s ease-in-out infinite;
 }
 
 @keyframes scan {
@@ -85,19 +86,19 @@ body {
 }
 
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0A0F1E;
+  background: #F1F5F9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1a2744;
+  background: #CBD5E1;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #243352;
+  background: #94A3B8;
 }

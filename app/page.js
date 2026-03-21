@@ -28,7 +28,10 @@ import {
   Zap,
   RefreshCw,
   Send,
-  CheckSquare
+  CheckSquare,
+  BookOpen,
+  Tag,
+  Scale
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,6 +44,7 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { mockTransactions, formatCurrency, formatTime, getRiskLevel, getRiskColor } from '@/lib/mockData';
+import { RULE_CATEGORIES } from '@/lib/ruleEngine';
 
 // Risk colors
 const COLORS = {
@@ -75,7 +79,7 @@ function RiskScoreBar({ score }) {
   const isCritical = score >= 90;
   return (
     <div className="flex items-center gap-2 w-32">
-      <div className="flex-1 h-2 bg-navy-700 rounded-full overflow-hidden">
+      <div className="flex-1 h-2 bg-slate-50 rounded-full overflow-hidden">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${score}%` }}
@@ -122,7 +126,7 @@ function CircularGauge({ score, size = 120 }) {
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="#1a2744"
+          stroke="#CBD5E1"
           strokeWidth="8"
           fill="none"
         />
@@ -145,7 +149,7 @@ function CircularGauge({ score, size = 120 }) {
         <span className={`text-3xl font-bold ${isCritical ? 'animate-pulse-red' : ''}`} style={{ color }}>
           {score}
         </span>
-        <span className="text-xs text-gray-400">Risk Score</span>
+        <span className="text-xs text-slate-500">Risk Score</span>
       </div>
     </div>
   );
@@ -190,18 +194,18 @@ function AgentStepIndicator({ steps, isLoading, currentStep }) {
               ) : isComplete ? (
                 <CheckCircle className="w-5 h-5 text-risk-low" />
               ) : (
-                <agent.icon className="w-5 h-5 text-gray-500" />
+                <agent.icon className="w-5 h-5 text-slate-400" />
               )}
             </div>
             <div className="flex-1">
               <p className={`font-medium text-sm ${
                 isActive ? 'text-risk-medium' :
-                isComplete ? 'text-white' :
-                'text-gray-400'
+                isComplete ? 'text-slate-900' :
+                'text-slate-400'
               }`}>
                 {agent.name}
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-slate-500">
                 {isActive ? agent.loadingText : step?.result || 'Pending'}
               </p>
             </div>
@@ -260,7 +264,7 @@ function CaseDetailDrawer({ transaction, isOpen, onClose, onAnalyze }) {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed right-0 top-0 h-full w-full max-w-2xl bg-navy-800 border-l border-border z-50 shadow-2xl"
+            className="fixed right-0 top-0 h-full w-full max-w-2xl bg-white border-l border-border z-50 shadow-2xl"
           >
             <ScrollArea className="h-full">
               <div className="p-6">
@@ -268,7 +272,7 @@ function CaseDetailDrawer({ transaction, isOpen, onClose, onAnalyze }) {
                 <div className="flex items-center justify-between mb-6">
                   <div>
                     <h2 className="text-xl font-bold">{transaction?.transaction_id}</h2>
-                    <p className="text-gray-400 text-sm">Case Investigation</p>
+                    <p className="text-slate-500 text-sm">Case Investigation</p>
                   </div>
                   <Button variant="ghost" size="icon" onClick={onClose}>
                     <X className="w-5 h-5" />
@@ -276,51 +280,51 @@ function CaseDetailDrawer({ transaction, isOpen, onClose, onAnalyze }) {
                 </div>
 
                 {/* Transaction Details */}
-                <Card className="bg-navy-700 border-border mb-6">
+                <Card className="bg-slate-50 border-border mb-6">
                   <CardContent className="p-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-secondary rounded-lg">
-                          <User className="w-4 h-4 text-gray-400" />
+                          <User className="w-4 h-4 text-slate-500" />
                         </div>
                         <div>
-                          <p className="text-xs text-gray-400">Account</p>
+                          <p className="text-xs text-slate-500">Account</p>
                           <p className="font-medium">{transaction?.account_id}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-secondary rounded-lg">
-                          <DollarSign className="w-4 h-4 text-gray-400" />
+                          <DollarSign className="w-4 h-4 text-slate-500" />
                         </div>
                         <div>
-                          <p className="text-xs text-gray-400">Amount</p>
+                          <p className="text-xs text-slate-500">Amount</p>
                           <p className="font-medium">{formatCurrency(transaction?.amount || 0)}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-secondary rounded-lg">
-                          <MapPin className="w-4 h-4 text-gray-400" />
+                          <MapPin className="w-4 h-4 text-slate-500" />
                         </div>
                         <div>
-                          <p className="text-xs text-gray-400">Location</p>
+                          <p className="text-xs text-slate-500">Location</p>
                           <p className="font-medium">{transaction?.location}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-secondary rounded-lg">
-                          <Clock className="w-4 h-4 text-gray-400" />
+                          <Clock className="w-4 h-4 text-slate-500" />
                         </div>
                         <div>
-                          <p className="text-xs text-gray-400">Time</p>
+                          <p className="text-xs text-slate-500">Time</p>
                           <p className="font-medium">{formatTime(transaction?.time_seconds || 0)}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3 col-span-2">
                         <div className="p-2 bg-secondary rounded-lg">
-                          <Monitor className="w-4 h-4 text-gray-400" />
+                          <Monitor className="w-4 h-4 text-slate-500" />
                         </div>
                         <div>
-                          <p className="text-xs text-gray-400">Merchant / Device IP</p>
+                          <p className="text-xs text-slate-500">Merchant / Device IP</p>
                           <p className="font-medium">{transaction?.merchant} • {transaction?.device_ip}</p>
                         </div>
                       </div>
@@ -350,7 +354,7 @@ function CaseDetailDrawer({ transaction, isOpen, onClose, onAnalyze }) {
 
                 {/* Agent Steps */}
                 <div className="mb-6">
-                  <h3 className="text-sm font-semibold text-gray-400 mb-3">ANALYSIS PIPELINE</h3>
+                  <h3 className="text-sm font-semibold text-slate-500 mb-3">ANALYSIS PIPELINE</h3>
                   <AgentStepIndicator
                     steps={analysis?.agent_steps || []}
                     isLoading={isAnalyzing}
@@ -368,7 +372,7 @@ function CaseDetailDrawer({ transaction, isOpen, onClose, onAnalyze }) {
                     {/* Triggered Signals */}
                     {analysis.triggered_signals?.length > 0 && (
                       <div>
-                        <h3 className="text-sm font-semibold text-gray-400 mb-3">TRIGGERED SIGNALS</h3>
+                        <h3 className="text-sm font-semibold text-slate-500 mb-3">TRIGGERED SIGNALS</h3>
                         <div className="space-y-2">
                           {analysis.triggered_signals.map((signal, idx) => (
                             <div key={idx} className={`p-3 rounded-lg border ${
@@ -381,7 +385,7 @@ function CaseDetailDrawer({ transaction, isOpen, onClose, onAnalyze }) {
                                 }`} />
                                 <span className="font-medium text-sm">{signal.signal}</span>
                               </div>
-                              <p className="text-xs text-gray-400 ml-6">{signal.description}</p>
+                              <p className="text-xs text-slate-500 ml-6">{signal.description}</p>
                             </div>
                           ))}
                         </div>
@@ -390,18 +394,18 @@ function CaseDetailDrawer({ transaction, isOpen, onClose, onAnalyze }) {
 
                     {/* Reasoning */}
                     <div>
-                      <h3 className="text-sm font-semibold text-gray-400 mb-3">REASONING</h3>
-                      <Card className="bg-navy-700 border-border">
+                      <h3 className="text-sm font-semibold text-slate-500 mb-3">REASONING</h3>
+                      <Card className="bg-slate-50 border-border">
                         <CardContent className="p-4">
-                          <p className="text-sm text-gray-300 leading-relaxed">{analysis.reasoning}</p>
+                          <p className="text-sm text-slate-700 leading-relaxed">{analysis.reasoning}</p>
                         </CardContent>
                       </Card>
                     </div>
 
                     {/* Compliance Report */}
                     <div>
-                      <h3 className="text-sm font-semibold text-gray-400 mb-3">COMPLIANCE REPORT</h3>
-                      <Card className="bg-navy-700 border-border">
+                      <h3 className="text-sm font-semibold text-slate-500 mb-3">COMPLIANCE REPORT</h3>
+                      <Card className="bg-slate-50 border-border">
                         <CardContent className="p-4">
                           <p className="text-sm font-medium mb-2">{analysis.compliance_report?.finding}</p>
                           <div className="flex flex-wrap gap-2 mb-2">
@@ -409,27 +413,27 @@ function CaseDetailDrawer({ transaction, isOpen, onClose, onAnalyze }) {
                               <Badge key={idx} variant="outline" className="text-xs">{ref}</Badge>
                             ))}
                           </div>
-                          <p className="text-xs text-gray-400">{analysis.compliance_report?.recommendation}</p>
+                          <p className="text-xs text-slate-500">{analysis.compliance_report?.recommendation}</p>
                         </CardContent>
                       </Card>
                     </div>
 
                     {/* Recommended Actions */}
                     <div>
-                      <h3 className="text-sm font-semibold text-gray-400 mb-3">RECOMMENDED ACTIONS</h3>
+                      <h3 className="text-sm font-semibold text-slate-500 mb-3">RECOMMENDED ACTIONS</h3>
                       <div className="space-y-2">
                         {analysis.recommended_actions?.map((action, idx) => (
-                          <div key={idx} className="flex items-center gap-3 p-3 bg-navy-700 rounded-lg">
+                          <div key={idx} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
                             <CheckSquare className={`w-4 h-4 ${
                               action.priority === 'immediate' ? 'text-risk-critical' :
                               action.priority === 'high' ? 'text-risk-medium' :
-                              'text-gray-400'
+                              'text-slate-500'
                             }`} />
                             <span className="text-sm flex-1">{action.action}</span>
                             <Badge variant="outline" className={`text-xs ${
                               action.priority === 'immediate' ? 'border-risk-critical/30 text-risk-critical' :
                               action.priority === 'high' ? 'border-risk-medium/30 text-risk-medium' :
-                              'border-gray-500/30 text-gray-400'
+                              'border-gray-500/30 text-slate-500'
                             }`}>
                               {action.priority}
                             </Badge>
@@ -440,9 +444,9 @@ function CaseDetailDrawer({ transaction, isOpen, onClose, onAnalyze }) {
 
                     {/* Status Row */}
                     <div className="grid grid-cols-2 gap-4">
-                      <Card className="bg-navy-700 border-border">
+                      <Card className="bg-slate-50 border-border">
                         <CardContent className="p-4">
-                          <p className="text-xs text-gray-400 mb-1">Account Status</p>
+                          <p className="text-xs text-slate-500 mb-1">Account Status</p>
                           <Badge className={`${
                             analysis.account_status === 'FREEZE' ? 'bg-risk-critical' :
                             analysis.account_status === 'MONITOR' ? 'bg-risk-medium' :
@@ -452,9 +456,9 @@ function CaseDetailDrawer({ transaction, isOpen, onClose, onAnalyze }) {
                           </Badge>
                         </CardContent>
                       </Card>
-                      <Card className="bg-navy-700 border-border">
+                      <Card className="bg-slate-50 border-border">
                         <CardContent className="p-4">
-                          <p className="text-xs text-gray-400 mb-1">Case Priority</p>
+                          <p className="text-xs text-slate-500 mb-1">Case Priority</p>
                           <Badge className={`${
                             analysis.case_priority === 'URGENT' ? 'bg-risk-critical' :
                             analysis.case_priority === 'HIGH' ? 'bg-risk-medium' :
@@ -467,12 +471,12 @@ function CaseDetailDrawer({ transaction, isOpen, onClose, onAnalyze }) {
                     </div>
 
                     {/* Escalate Toggle */}
-                    <div className="flex items-center justify-between p-4 bg-navy-700 rounded-lg">
+                    <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
                       <div className="flex items-center gap-3">
                         <AlertOctagon className="w-5 h-5 text-risk-medium" />
                         <div>
                           <p className="font-medium text-sm">Escalate to Human</p>
-                          <p className="text-xs text-gray-400">Route to senior compliance officer</p>
+                          <p className="text-xs text-slate-500">Route to senior compliance officer</p>
                         </div>
                       </div>
                       <Switch checked={analysis.escalate_to_human} />
@@ -481,12 +485,12 @@ function CaseDetailDrawer({ transaction, isOpen, onClose, onAnalyze }) {
                     {/* Customer Notification */}
                     {analysis.customer_notification && analysis.customer_notification !== "No customer notification required." && (
                       <div>
-                        <h3 className="text-sm font-semibold text-gray-400 mb-3">CUSTOMER NOTIFICATION</h3>
-                        <Card className="bg-navy-700 border-border">
+                        <h3 className="text-sm font-semibold text-slate-500 mb-3">CUSTOMER NOTIFICATION</h3>
+                        <Card className="bg-slate-50 border-border">
                           <CardContent className="p-4">
                             <div className="flex items-start gap-3">
-                              <Send className="w-4 h-4 text-gray-400 mt-1" />
-                              <p className="text-sm text-gray-300">{analysis.customer_notification}</p>
+                              <Send className="w-4 h-4 text-slate-500 mt-1" />
+                              <p className="text-sm text-slate-700">{analysis.customer_notification}</p>
                             </div>
                           </CardContent>
                         </Card>
@@ -506,11 +510,11 @@ function CaseDetailDrawer({ transaction, isOpen, onClose, onAnalyze }) {
 // Stats card component
 function StatsCard({ title, value, icon: Icon, trend, color }) {
   return (
-    <Card className="bg-navy-800 border-border">
+    <Card className="bg-white border-border shadow-sm">
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs text-gray-400 uppercase tracking-wider">{title}</p>
+            <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">{title}</p>
             <p className="text-2xl font-bold mt-1" style={{ color }}>{value}</p>
           </div>
           <div className="p-3 rounded-lg" style={{ backgroundColor: `${color}20` }}>
@@ -534,6 +538,8 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [stats, setStats] = useState({ total: 0, flagged: 0, blocked: 0, review: 0, clear: 0 });
   const [isLive, setIsLive] = useState(true);
+  const [ruleEngineData, setRuleEngineData] = useState({ rules: [], stats: null });
+  const [ruleCategory, setRuleCategory] = useState('ALL');
 
   // Manual analysis form state
   const [manualForm, setManualForm] = useState({
@@ -544,6 +550,14 @@ export default function Dashboard() {
     time_seconds: '',
     device_ip: ''
   });
+
+  // Load rule engine data
+  useEffect(() => {
+    fetch('/api/rules')
+      .then(res => res.json())
+      .then(data => setRuleEngineData({ rules: data.rules || [], stats: data.stats || null }))
+      .catch(err => console.error('Failed to load rules:', err));
+  }, []);
 
   // Load transactions
   useEffect(() => {
@@ -612,25 +626,25 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-navy-900">
       {/* Header */}
-      <header className="bg-navy-800 border-b border-border sticky top-0 z-30">
+      <header className="bg-bank-blue border-b border-bank-blue-light sticky top-0 z-30">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <Shield className="w-8 h-8 text-risk-critical" />
-                <span className="text-2xl font-bold">Flagr</span>
+                <Shield className="w-8 h-8 text-white" />
+                <span className="text-2xl font-bold text-white">Flagr</span>
               </div>
-              <span className="text-xs text-gray-500 bg-navy-700 px-2 py-1 rounded">v2.1.0</span>
+              <span className="text-xs text-blue-200 bg-bank-blue-light/60 px-2 py-1 rounded">v2.1.0</span>
             </div>
             <div className="flex items-center gap-4">
               {/* Live indicator */}
               <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${isLive ? 'bg-risk-low animate-pulse' : 'bg-gray-500'}`} />
-                <span className={`text-sm ${isLive ? 'text-risk-low' : 'text-gray-500'}`}>
+                <div className={`w-2 h-2 rounded-full ${isLive ? 'bg-green-400 animate-pulse' : 'bg-slate-400'}`} />
+                <span className={`text-sm ${isLive ? 'text-green-300' : 'text-slate-400'}`}>
                   {isLive ? 'Live' : 'Paused'}
                 </span>
               </div>
-              <Button variant="ghost" size="icon" className="relative">
+              <Button variant="ghost" size="icon" className="relative text-white hover:text-white hover:bg-bank-blue-light">
                 <Bell className="w-5 h-5" />
                 {alerts.length > 0 && (
                   <span className="absolute -top-1 -right-1 w-4 h-4 bg-risk-critical rounded-full text-xs flex items-center justify-center">
@@ -638,7 +652,7 @@ export default function Dashboard() {
                   </span>
                 )}
               </Button>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="text-white hover:text-white hover:bg-bank-blue-light">
                 <Settings className="w-5 h-5" />
               </Button>
             </div>
@@ -649,18 +663,21 @@ export default function Dashboard() {
       {/* Main Content */}
       <main className="p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-navy-800 border border-border mb-6">
-            <TabsTrigger value="dashboard" className="data-[state=active]:bg-navy-700">
+          <TabsList className="bg-white border border-border mb-6 shadow-sm">
+            <TabsTrigger value="dashboard" className="data-[state=active]:bg-bank-blue-faint data-[state=active]:text-bank-blue">
               <Activity className="w-4 h-4 mr-2" /> Dashboard
             </TabsTrigger>
-            <TabsTrigger value="analyze" className="data-[state=active]:bg-navy-700">
+            <TabsTrigger value="analyze" className="data-[state=active]:bg-bank-blue-faint data-[state=active]:text-bank-blue">
               <Search className="w-4 h-4 mr-2" /> Analyze
             </TabsTrigger>
-            <TabsTrigger value="alerts" className="data-[state=active]:bg-navy-700">
+            <TabsTrigger value="alerts" className="data-[state=active]:bg-bank-blue-faint data-[state=active]:text-bank-blue">
               <AlertTriangle className="w-4 h-4 mr-2" /> Alerts
               {alerts.length > 0 && (
                 <Badge className="ml-2 bg-risk-critical">{alerts.length}</Badge>
               )}
+            </TabsTrigger>
+            <TabsTrigger value="rules" className="data-[state=active]:bg-bank-blue-faint data-[state=active]:text-bank-blue">
+              <BookOpen className="w-4 h-4 mr-2" /> Rule Engine
             </TabsTrigger>
           </TabsList>
 
@@ -679,21 +696,21 @@ export default function Dashboard() {
             <div className="flex items-center gap-4 mb-6">
               <div className="flex-1">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                   <Input
                     placeholder="Search transactions, accounts, merchants..."
-                    className="pl-10 bg-navy-800 border-border"
+                    className="pl-10 bg-white border-border"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
               </div>
               <Select value={riskFilter} onValueChange={setRiskFilter}>
-                <SelectTrigger className="w-40 bg-navy-800 border-border">
+                <SelectTrigger className="w-40 bg-white border-border shadow-sm">
                   <Filter className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="Risk Level" />
                 </SelectTrigger>
-                <SelectContent className="bg-navy-800 border-border">
+                <SelectContent className="bg-white border-border shadow-sm">
                   <SelectItem value="all">All Levels</SelectItem>
                   <SelectItem value="CRITICAL">Critical</SelectItem>
                   <SelectItem value="HIGH">High</SelectItem>
@@ -702,10 +719,10 @@ export default function Dashboard() {
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-40 bg-navy-800 border-border">
+                <SelectTrigger className="w-40 bg-white border-border shadow-sm">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
-                <SelectContent className="bg-navy-800 border-border">
+                <SelectContent className="bg-white border-border shadow-sm">
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="flagged">Flagged</SelectItem>
                   <SelectItem value="blocked">Blocked</SelectItem>
@@ -719,22 +736,22 @@ export default function Dashboard() {
             </div>
 
             {/* Transaction Table */}
-            <Card className="bg-navy-800 border-border">
+            <Card className="bg-white border-border shadow-sm">
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-border">
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Transaction ID</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Account</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Amount</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Merchant</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Location</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Time</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Risk Score</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Level</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Action</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Transaction ID</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Account</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Amount</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Merchant</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Location</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Time</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Risk Score</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Level</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Action</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -744,17 +761,17 @@ export default function Dashboard() {
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: idx * 0.03 }}
-                          className="border-b border-border hover:bg-navy-700/50 cursor-pointer transition-colors"
+                          className="border-b border-border hover:bg-slate-50 cursor-pointer transition-colors"
                           onClick={() => openCase(txn)}
                         >
                           <td className="px-4 py-3 font-mono text-sm">{txn.transaction_id}</td>
-                          <td className="px-4 py-3 font-mono text-sm text-gray-400">{txn.account_id}</td>
+                          <td className="px-4 py-3 font-mono text-sm text-slate-500">{txn.account_id}</td>
                           <td className="px-4 py-3 font-medium">{formatCurrency(txn.amount)}</td>
-                          <td className="px-4 py-3 text-sm text-gray-300 max-w-[150px] truncate">{txn.merchant}</td>
+                          <td className="px-4 py-3 text-sm text-slate-700 max-w-[150px] truncate">{txn.merchant}</td>
                           <td className="px-4 py-3 text-sm">
                             <Badge variant="outline" className="font-mono">{txn.location}</Badge>
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-400">{formatTime(txn.time_seconds)}</td>
+                          <td className="px-4 py-3 text-sm text-slate-500">{formatTime(txn.time_seconds)}</td>
                           <td className="px-4 py-3">
                             <RiskScoreBar score={txn.risk_score} />
                           </td>
@@ -788,7 +805,7 @@ export default function Dashboard() {
           {/* Analyze Tab */}
           <TabsContent value="analyze">
             <div className="max-w-2xl mx-auto">
-              <Card className="bg-navy-800 border-border">
+              <Card className="bg-white border-border shadow-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Search className="w-5 h-5 text-risk-critical" />
@@ -802,7 +819,7 @@ export default function Dashboard() {
                         <Label>Account ID</Label>
                         <Input
                           placeholder="ACC-XXXX"
-                          className="bg-navy-700 border-border mt-1"
+                          className="bg-slate-50 border-border mt-1"
                           value={manualForm.account_id}
                           onChange={(e) => setManualForm({...manualForm, account_id: e.target.value})}
                         />
@@ -813,7 +830,7 @@ export default function Dashboard() {
                           type="number"
                           step="0.01"
                           placeholder="0.00"
-                          className="bg-navy-700 border-border mt-1"
+                          className="bg-slate-50 border-border mt-1"
                           value={manualForm.amount}
                           onChange={(e) => setManualForm({...manualForm, amount: e.target.value})}
                         />
@@ -822,7 +839,7 @@ export default function Dashboard() {
                         <Label>Merchant</Label>
                         <Input
                           placeholder="Merchant name"
-                          className="bg-navy-700 border-border mt-1"
+                          className="bg-slate-50 border-border mt-1"
                           value={manualForm.merchant}
                           onChange={(e) => setManualForm({...manualForm, merchant: e.target.value})}
                         />
@@ -831,7 +848,7 @@ export default function Dashboard() {
                         <Label>Location (Country Code)</Label>
                         <Input
                           placeholder="US, EU, CN..."
-                          className="bg-navy-700 border-border mt-1"
+                          className="bg-slate-50 border-border mt-1"
                           value={manualForm.location}
                           onChange={(e) => setManualForm({...manualForm, location: e.target.value})}
                         />
@@ -841,7 +858,7 @@ export default function Dashboard() {
                         <Input
                           type="number"
                           placeholder="43200"
-                          className="bg-navy-700 border-border mt-1"
+                          className="bg-slate-50 border-border mt-1"
                           value={manualForm.time_seconds}
                           onChange={(e) => setManualForm({...manualForm, time_seconds: e.target.value})}
                         />
@@ -850,7 +867,7 @@ export default function Dashboard() {
                         <Label>Device IP</Label>
                         <Input
                           placeholder="192.168.1.1"
-                          className="bg-navy-700 border-border mt-1"
+                          className="bg-slate-50 border-border mt-1"
                           value={manualForm.device_ip}
                           onChange={(e) => setManualForm({...manualForm, device_ip: e.target.value})}
                         />
@@ -869,11 +886,11 @@ export default function Dashboard() {
           <TabsContent value="alerts">
             {alerts.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20">
-                <div className="w-20 h-20 bg-navy-800 rounded-full flex items-center justify-center mb-4">
+                <div className="w-20 h-20 bg-white border border-slate-200 rounded-full flex items-center justify-center mb-4">
                   <CheckCircle className="w-10 h-10 text-risk-low" />
                 </div>
                 <h3 className="text-xl font-semibold mb-2">All Clear</h3>
-                <p className="text-gray-400">No critical or high-risk alerts at this time</p>
+                <p className="text-slate-500">No critical or high-risk alerts at this time</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -906,7 +923,7 @@ export default function Dashboard() {
                                   <Badge className="bg-risk-critical animate-pulse-red">URGENT</Badge>
                                 )}
                               </div>
-                              <p className="text-sm text-gray-400">
+                              <p className="text-sm text-slate-500">
                                 {alert.account_id} • {formatCurrency(alert.amount)} • {alert.merchant}
                               </p>
                             </div>
@@ -934,6 +951,130 @@ export default function Dashboard() {
               </div>
             )}
           </TabsContent>
+          {/* Rule Engine Tab */}
+          <TabsContent value="rules">
+            {/* Header */}
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-slate-900 mb-1">Compliance Rule Engine</h2>
+              <p className="text-slate-500 text-sm">
+                {ruleEngineData.stats?.total || 0} deterministic rules evaluated on every transaction. Each rule maps to a specific regulation or fraud pattern.
+              </p>
+            </div>
+
+            {/* Summary cards */}
+            {ruleEngineData.stats && (
+              <div className="grid grid-cols-4 gap-4 mb-6">
+                <Card className="bg-white border-border shadow-sm">
+                  <CardContent className="p-4">
+                    <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1">Total Rules</p>
+                    <p className="text-2xl font-bold text-bank-blue">{ruleEngineData.stats.total}</p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-white border-border shadow-sm">
+                  <CardContent className="p-4">
+                    <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1">Critical</p>
+                    <p className="text-2xl font-bold text-risk-critical">{ruleEngineData.stats.bySeverity?.critical || 0}</p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-white border-border shadow-sm">
+                  <CardContent className="p-4">
+                    <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1">High</p>
+                    <p className="text-2xl font-bold text-risk-high">{ruleEngineData.stats.bySeverity?.high || 0}</p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-white border-border shadow-sm">
+                  <CardContent className="p-4">
+                    <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1">Medium / Low</p>
+                    <p className="text-2xl font-bold text-risk-medium">
+                      {(ruleEngineData.stats.bySeverity?.medium || 0) + (ruleEngineData.stats.bySeverity?.low || 0)}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Category filter */}
+            <div className="flex items-center gap-2 mb-6 flex-wrap">
+              {['ALL', ...Object.keys(RULE_CATEGORIES)].map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setRuleCategory(cat)}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                    ruleCategory === cat
+                      ? 'bg-bank-blue text-white border-bank-blue'
+                      : 'bg-white text-slate-600 border-slate-200 hover:border-bank-blue hover:text-bank-blue'
+                  }`}
+                >
+                  {cat === 'ALL' ? 'All Categories' : RULE_CATEGORIES[cat]}
+                </button>
+              ))}
+            </div>
+
+            {/* Rules list */}
+            <div className="space-y-3">
+              {ruleEngineData.rules
+                .filter(rule => ruleCategory === 'ALL' || rule.category === ruleCategory)
+                .map((rule, idx) => (
+                  <motion.div
+                    key={rule.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.03 }}
+                  >
+                    <Card className="bg-white border-border shadow-sm hover:shadow-md transition-shadow">
+                      <CardContent className="p-5">
+                        <div className="flex items-start gap-4">
+                          {/* Severity indicator */}
+                          <div className={`mt-0.5 w-2 h-full min-h-[40px] rounded-full flex-shrink-0 ${
+                            rule.severity === 'critical' ? 'bg-risk-critical' :
+                            rule.severity === 'high' ? 'bg-risk-high' :
+                            rule.severity === 'medium' ? 'bg-risk-medium' :
+                            'bg-risk-low'
+                          }`} />
+
+                          <div className="flex-1 min-w-0">
+                            {/* Top row */}
+                            <div className="flex items-center gap-3 mb-2 flex-wrap">
+                              <span className="font-mono text-xs font-bold text-bank-blue bg-bank-blue-faint px-2 py-0.5 rounded">
+                                {rule.id}
+                              </span>
+                              <span className={`text-xs font-semibold px-2 py-0.5 rounded border ${
+                                rule.severity === 'critical' ? 'text-risk-critical border-risk-critical/30 bg-risk-critical/5' :
+                                rule.severity === 'high' ? 'text-risk-high border-risk-high/30 bg-risk-high/5' :
+                                rule.severity === 'medium' ? 'text-risk-medium border-risk-medium/30 bg-risk-medium/5' :
+                                'text-risk-low border-risk-low/30 bg-risk-low/5'
+                              }`}>
+                                {rule.severity.toUpperCase()}
+                              </span>
+                              <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded flex items-center gap-1">
+                                <Tag className="w-3 h-3" />
+                                {rule.categoryLabel}
+                              </span>
+                              <span className="text-xs text-slate-500 ml-auto">+{rule.points} pts</span>
+                            </div>
+
+                            {/* Rule name */}
+                            <p className="font-semibold text-slate-900 mb-1">{rule.name}</p>
+
+                            {/* Description */}
+                            <p className="text-sm text-slate-600 leading-relaxed mb-2">{rule.description}</p>
+
+                            {/* Regulation reference */}
+                            {rule.regulation && (
+                              <div className="flex items-center gap-1.5 mt-2">
+                                <Scale className="w-3.5 h-3.5 text-bank-blue flex-shrink-0" />
+                                <span className="text-xs text-bank-blue font-medium">{rule.regulation}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+            </div>
+          </TabsContent>
+
         </Tabs>
       </main>
 
