@@ -36,7 +36,7 @@ The compliance officer sees a live dashboard of all transactions, each pre-score
 
 The rule engine is the first layer of analysis. It is deterministic, auditable, and fast. Every transaction is evaluated against every rule in under a millisecond.
 
-Rules are organized into six categories:
+Rules are organized into seven categories:
 
 **Amount Threshold Rules**
 
@@ -60,7 +60,11 @@ These rules operate at the intersection of multiple factors. A transaction of $5
 
 **Device and IP Rules**
 
-These rules check the device IP against known datacenter, VPN, and hosting provider ranges. Legitimate retail customers connect from residential or mobile IPs. Commercial IPs suggest proxied or automated activity. Non-residential IPs are flagged at lower severity as a contextual signal.
+These rules check the device IP against known datacenter, VPN, and hosting provider ranges. Legitimate retail customers connect from residential or mobile IPs. Commercial IPs suggest proxied or automated activity. Non-residential IPs are flagged at lower severity as a contextual signal. Transactions routed through known TOR exit nodes or anonymizing proxies trigger a high-severity rule because legitimate banking customers almost never use anonymizing networks for financial transactions.
+
+**Velocity and Behavior Rules**
+
+These rules catch behavioral patterns that suggest fraud even when individual transaction attributes look normal. A transaction under $1.00 is a strong card testing signal — fraudsters run a micro-charge to confirm a stolen card is active before making larger purchases. Transaction amounts that fall within 5% below a common review threshold ($1,000, $3,000, or $5,000) are flagged as potential split structuring. Peer-to-peer payment platforms like Venmo, CashApp, and Zelle are flagged because they are increasingly used for rapid fund layering. NFT marketplaces are flagged because FinCEN and the FATF have identified them as an emerging money laundering vehicle. Gift card and prepaid card loading is flagged as a high-risk cash-equivalent conversion method. Merchant names matching shell company patterns trigger a medium-severity rule under the FinCEN beneficial ownership requirements.
 
 ### How Scoring Works
 
@@ -128,6 +132,22 @@ Flagr is a full-stack web platform with a Next.js 14 frontend deployed on Vercel
 The rule engine runs entirely in the Next.js API layer with no external dependencies. It evaluates all rules on every transaction in a single synchronous pass. The four AI agents are orchestrated using Google ADK's LlmAgent and Runner pattern. Each agent runs on Gemini 2.5 Flash with a custom instruction set that defines its role, required output structure, and strict behavioral constraints.
 
 The transaction data is sourced from the Kaggle Credit Card Fraud Detection dataset.
+
+---
+
+## Flagr AI Assistant
+
+Every page of the dashboard has a floating chat button in the bottom-right corner. Click it to open the Flagr AI assistant. You can ask it anything about a transaction or about fraud detection in general, and it will respond in simple, plain English — no jargon.
+
+When you have a transaction open in the case drawer, the AI automatically has context on that transaction. You can ask things like "why is this suspicious?" or "what does this risk score mean?" and it will answer specifically about the transaction you are looking at.
+
+The AI uses the HuggingFace Inference API with `HuggingFaceH4/zephyr-7b-beta`. Add a `HF_TOKEN` environment variable with a free HuggingFace account token to enable it. Without a token it falls back to a simple rule-based explanation.
+
+---
+
+## Notifications
+
+The bell icon in the header shows a count of all high-risk transactions currently in the system. Clicking it opens a dropdown that lists each alert by transaction ID, risk level, and merchant. Clicking any notification takes you directly to that transaction's case view. There is also a button to jump to the full Alerts tab.
 
 ---
 

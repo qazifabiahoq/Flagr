@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Shield,
@@ -31,7 +31,9 @@ import {
   CheckSquare,
   BookOpen,
   Tag,
-  Scale
+  Scale,
+  MessageSquare,
+  Bot
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -526,6 +528,159 @@ function StatsCard({ title, value, icon: Icon, trend, color }) {
   );
 }
 
+// Notification dropdown — click bell to open, each item navigates to that transaction
+function NotificationPanel({ alerts, onClose, onSelectAlert, onViewAll }) {
+  return (
+    <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-border rounded-xl shadow-2xl z-50 overflow-hidden">
+      <div className="p-3 border-b border-border flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Bell className="w-4 h-4 text-slate-600" />
+          <span className="font-semibold text-sm text-slate-900">Notifications</span>
+          {alerts.length > 0 && (
+            <span className="bg-risk-critical text-white text-xs px-1.5 py-0.5 rounded-full font-bold">{alerts.length}</span>
+          )}
+        </div>
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
+          <X className="w-3.5 h-3.5" />
+        </Button>
+      </div>
+      <ScrollArea className="max-h-72">
+        {alerts.length === 0 ? (
+          <div className="p-6 text-center text-slate-500 text-sm">
+            <CheckCircle className="w-8 h-8 text-risk-low mx-auto mb-2" />
+            No active alerts
+          </div>
+        ) : (
+          <div>
+            {alerts.map(alert => (
+              <button
+                key={alert.transaction_id}
+                className="w-full text-left p-3 hover:bg-slate-50 border-b border-border/50 transition-colors"
+                onClick={() => onSelectAlert(alert)}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <AlertTriangle className={`w-3.5 h-3.5 flex-shrink-0 ${alert.risk_score >= 90 ? 'text-risk-critical' : 'text-risk-medium'}`} />
+                  <span className="font-medium text-sm">{alert.transaction_id}</span>
+                  <RiskLevelChip score={alert.risk_score} />
+                </div>
+                <p className="text-xs text-slate-500 ml-5 truncate">
+                  {alert.account_id} · {formatCurrency(alert.amount)} · {alert.merchant}
+                </p>
+              </button>
+            ))}
+          </div>
+        )}
+      </ScrollArea>
+      <div className="p-3 border-t border-border">
+        <Button variant="outline" size="sm" className="w-full text-sm" onClick={onViewAll}>
+          View All Alerts
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// Floating AI chat panel — asks Flagr AI about any transaction in plain English
+function AIChatPanel({ isOpen, onClose, selectedTransaction }) {
+  const [messages, setMessages] = useState([
+    { role: 'assistant', text: "Hi! I'm Flagr AI. Ask me anything about a transaction or fraud — I'll explain it in simple, plain English." }
+  ]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const endRef = useRef(null);
+
+  useEffect(() => {
+    if (isOpen) endRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isOpen]);
+
+  const sendMessage = async () => {
+    const trimmed = input.trim();
+    if (!trimmed || loading) return;
+    setMessages(prev => [...prev, { role: 'user', text: trimmed }]);
+    setInput('');
+    setLoading(true);
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: trimmed, transaction: selectedTransaction }),
+      });
+      const data = await res.json();
+      setMessages(prev => [...prev, { role: 'assistant', text: data.reply }]);
+    } catch {
+      setMessages(prev => [...prev, { role: 'assistant', text: "Sorry, couldn't reach the AI. Please try again." }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed bottom-20 right-4 z-50 flex flex-col bg-white border border-border rounded-2xl shadow-2xl overflow-hidden"
+      style={{ width: 'min(380px, calc(100vw - 2rem))', maxHeight: '70vh' }}
+    >
+      <div className="flex items-center justify-between px-4 py-3 bg-bank-blue text-white flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <Bot className="w-5 h-5" />
+          <span className="font-semibold text-sm">Flagr AI</span>
+          {selectedTransaction && (
+            <span className="text-xs text-blue-200 bg-white/10 px-2 py-0.5 rounded-full">
+              {selectedTransaction.transaction_id}
+            </span>
+          )}
+        </div>
+        <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 h-7 w-7" onClick={onClose}>
+          <X className="w-4 h-4" />
+        </Button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+        {messages.map((msg, idx) => (
+          <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div className={`max-w-[85%] px-3 py-2 rounded-2xl text-sm leading-relaxed ${
+              msg.role === 'user'
+                ? 'bg-bank-blue text-white rounded-br-none'
+                : 'bg-slate-100 text-slate-800 rounded-bl-none'
+            }`}>
+              {msg.text}
+            </div>
+          </div>
+        ))}
+        {loading && (
+          <div className="flex justify-start">
+            <div className="bg-slate-100 px-4 py-3 rounded-2xl rounded-bl-none flex items-center gap-1">
+              <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+              <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+              <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+            </div>
+          </div>
+        )}
+        <div ref={endRef} />
+      </div>
+
+      <div className="p-3 border-t border-border flex gap-2 flex-shrink-0 bg-white">
+        <Input
+          placeholder={selectedTransaction ? 'Ask about this transaction...' : 'Ask about fraud detection...'}
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && !loading && sendMessage()}
+          className="flex-1 text-sm h-9"
+        />
+        <Button
+          size="icon"
+          className="h-9 w-9 bg-bank-blue hover:bg-bank-blue-light text-white flex-shrink-0"
+          onClick={sendMessage}
+          disabled={loading || !input.trim()}
+        >
+          <Send className="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 // Main Dashboard Component
 export default function Dashboard() {
   const [transactions, setTransactions] = useState([]);
@@ -540,6 +695,9 @@ export default function Dashboard() {
   const [isLive, setIsLive] = useState(true);
   const [ruleEngineData, setRuleEngineData] = useState({ rules: [], stats: null });
   const [ruleCategory, setRuleCategory] = useState('ALL');
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const notifRef = useRef(null);
 
   // Manual analysis form state
   const [manualForm, setManualForm] = useState({
@@ -550,6 +708,16 @@ export default function Dashboard() {
     time_seconds: '',
     device_ip: ''
   });
+
+  // Close notification panel when clicking outside
+  useEffect(() => {
+    if (!notifOpen) return;
+    function handleClick(e) {
+      if (notifRef.current && !notifRef.current.contains(e.target)) setNotifOpen(false);
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [notifOpen]);
 
   // Load rule engine data
   useEffect(() => {
@@ -644,14 +812,36 @@ export default function Dashboard() {
                   {isLive ? 'Live' : 'Paused'}
                 </span>
               </div>
-              <Button variant="ghost" size="icon" className="relative text-white hover:text-white hover:bg-bank-blue-light">
-                <Bell className="w-5 h-5" />
-                {alerts.length > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-risk-critical rounded-full text-xs flex items-center justify-center">
-                    {alerts.length}
-                  </span>
+              <div className="relative" ref={notifRef}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative text-white hover:text-white hover:bg-bank-blue-light"
+                  onClick={() => setNotifOpen(v => !v)}
+                >
+                  <Bell className="w-5 h-5" />
+                  {alerts.length > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-risk-critical rounded-full text-xs flex items-center justify-center">
+                      {alerts.length}
+                    </span>
+                  )}
+                </Button>
+                {notifOpen && (
+                  <NotificationPanel
+                    alerts={alerts}
+                    onClose={() => setNotifOpen(false)}
+                    onSelectAlert={(alert) => {
+                      setNotifOpen(false);
+                      setActiveTab('dashboard');
+                      openCase(alert);
+                    }}
+                    onViewAll={() => {
+                      setNotifOpen(false);
+                      setActiveTab('alerts');
+                    }}
+                  />
                 )}
-              </Button>
+              </div>
               <Button variant="ghost" size="icon" className="text-white hover:text-white hover:bg-bank-blue-light">
                 <Settings className="w-5 h-5" />
               </Button>
@@ -1083,6 +1273,24 @@ export default function Dashboard() {
         transaction={selectedTransaction}
         isOpen={drawerOpen}
         onClose={() => setDrawerOpen(false)}
+      />
+
+      {/* Floating AI Chat Button */}
+      <div className="fixed bottom-4 right-4 z-40">
+        <Button
+          className="rounded-full p-3 bg-bank-blue hover:bg-bank-blue-light shadow-2xl border-2 border-white/20"
+          onClick={() => setChatOpen(v => !v)}
+          title="Ask Flagr AI"
+        >
+          <MessageSquare className="w-6 h-6 text-white" />
+        </Button>
+      </div>
+
+      {/* AI Chat Panel */}
+      <AIChatPanel
+        isOpen={chatOpen}
+        onClose={() => setChatOpen(false)}
+        selectedTransaction={selectedTransaction}
       />
     </div>
   );
