@@ -171,6 +171,3 @@ The assistant uses the HuggingFace Inference API with `HuggingFaceH4/zephyr-7b-b
 
 The notification system surfaces high-risk activity directly in the header without requiring the analyst to navigate to a separate page. The bell icon displays a live count of all transactions currently at HIGH or CRITICAL risk. Clicking the icon opens a panel listing each alert with the transaction ID, risk level, and merchant. Every item in the panel is a direct link -  clicking it navigates immediately to the dashboard view for that transaction and opens the full case investigation drawer. A secondary action in the panel jumps to the dedicated Alerts tab where all high-risk transactions are listed together.
 
----
-
-Built for GenAI Genesis 2026.
