@@ -528,7 +528,7 @@ function StatsCard({ title, value, icon: Icon, trend, color }) {
   );
 }
 
-// Notification dropdown — click bell to open, each item navigates to that transaction
+// Notification dropdown -  click bell to open, each item navigates to that transaction
 function NotificationPanel({ alerts, onClose, onSelectAlert, onViewAll }) {
   return (
     <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-border rounded-xl shadow-2xl z-50 overflow-hidden">
@@ -580,10 +580,10 @@ function NotificationPanel({ alerts, onClose, onSelectAlert, onViewAll }) {
   );
 }
 
-// Floating AI chat panel — asks Flagr AI about any transaction in plain English
+// Floating AI chat panel -  asks Flagr AI about any transaction in plain English
 function AIChatPanel({ isOpen, onClose, selectedTransaction, allTransactions = [] }) {
   const [messages, setMessages] = useState([
-    { role: 'assistant', text: "Hi! I'm Flagr AI. Ask me anything about a transaction or fraud — I'll explain it in simple, plain English." }
+    { role: 'assistant', text: "Hey there! I'm Flagr AI. Ask me anything about a transaction, a merchant, or fraud in general and I'll break it down in plain English. How can I help you today?" }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
