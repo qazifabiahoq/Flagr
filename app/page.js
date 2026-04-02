@@ -273,7 +273,7 @@ function CaseDetailDrawer({ transaction, isOpen, onClose, onAnalyze }) {
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h2 className="text-xl font-bold">{transaction?.transaction_id}</h2>
+                    <h2 className="text-xl font-bold text-slate-900">{transaction?.transaction_id}</h2>
                     <p className="text-slate-500 text-sm">Case Investigation</p>
                   </div>
                   <Button variant="ghost" size="icon" onClick={onClose}>
@@ -291,7 +291,7 @@ function CaseDetailDrawer({ transaction, isOpen, onClose, onAnalyze }) {
                         </div>
                         <div>
                           <p className="text-xs text-slate-500">Account</p>
-                          <p className="font-medium">{transaction?.account_id}</p>
+                          <p className="font-medium text-slate-900">{transaction?.account_id}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -300,7 +300,7 @@ function CaseDetailDrawer({ transaction, isOpen, onClose, onAnalyze }) {
                         </div>
                         <div>
                           <p className="text-xs text-slate-500">Amount</p>
-                          <p className="font-medium">{formatCurrency(transaction?.amount || 0)}</p>
+                          <p className="font-medium text-slate-900">{formatCurrency(transaction?.amount || 0)}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -309,7 +309,7 @@ function CaseDetailDrawer({ transaction, isOpen, onClose, onAnalyze }) {
                         </div>
                         <div>
                           <p className="text-xs text-slate-500">Location</p>
-                          <p className="font-medium">{transaction?.location}</p>
+                          <p className="font-medium text-slate-900">{transaction?.location}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -318,7 +318,7 @@ function CaseDetailDrawer({ transaction, isOpen, onClose, onAnalyze }) {
                         </div>
                         <div>
                           <p className="text-xs text-slate-500">Time</p>
-                          <p className="font-medium">{formatTime(transaction?.time_seconds || 0)}</p>
+                          <p className="font-medium text-slate-900">{formatTime(transaction?.time_seconds || 0)}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3 col-span-2">
@@ -327,7 +327,7 @@ function CaseDetailDrawer({ transaction, isOpen, onClose, onAnalyze }) {
                         </div>
                         <div>
                           <p className="text-xs text-slate-500">Merchant / Device IP</p>
-                          <p className="font-medium">{transaction?.merchant} • {transaction?.device_ip}</p>
+                          <p className="font-medium text-slate-900">{transaction?.merchant} • {transaction?.device_ip}</p>
                         </div>
                       </div>
                     </div>
@@ -385,7 +385,7 @@ function CaseDetailDrawer({ transaction, isOpen, onClose, onAnalyze }) {
                                 <AlertTriangle className={`w-4 h-4 ${
                                   signal.severity === 'high' ? 'text-risk-critical' : 'text-risk-medium'
                                 }`} />
-                                <span className="font-medium text-sm">{signal.signal}</span>
+                                <span className="font-medium text-sm text-slate-900">{signal.signal}</span>
                               </div>
                               <p className="text-xs text-slate-500 ml-6">{signal.description}</p>
                             </div>
@@ -409,7 +409,7 @@ function CaseDetailDrawer({ transaction, isOpen, onClose, onAnalyze }) {
                       <h3 className="text-sm font-semibold text-slate-500 mb-3">COMPLIANCE REPORT</h3>
                       <Card className="bg-slate-50 border-border">
                         <CardContent className="p-4">
-                          <p className="text-sm font-medium mb-2">{analysis.compliance_report?.finding}</p>
+                          <p className="text-sm font-medium mb-2 text-slate-900">{analysis.compliance_report?.finding}</p>
                           <div className="flex flex-wrap gap-2 mb-2">
                             {analysis.compliance_report?.regulation_refs?.map((ref, idx) => (
                               <Badge key={idx} variant="outline" className="text-xs">{ref}</Badge>
@@ -431,7 +431,7 @@ function CaseDetailDrawer({ transaction, isOpen, onClose, onAnalyze }) {
                               action.priority === 'high' ? 'text-risk-medium' :
                               'text-slate-500'
                             }`} />
-                            <span className="text-sm flex-1">{action.action}</span>
+                            <span className="text-sm flex-1 text-slate-900">{action.action}</span>
                             <Badge variant="outline" className={`text-xs ${
                               action.priority === 'immediate' ? 'border-risk-critical/30 text-risk-critical' :
                               action.priority === 'high' ? 'border-risk-medium/30 text-risk-medium' :
@@ -477,7 +477,7 @@ function CaseDetailDrawer({ transaction, isOpen, onClose, onAnalyze }) {
                       <div className="flex items-center gap-3">
                         <AlertOctagon className="w-5 h-5 text-risk-medium" />
                         <div>
-                          <p className="font-medium text-sm">Escalate to Human</p>
+                          <p className="font-medium text-sm text-slate-900">Escalate to Human</p>
                           <p className="text-xs text-slate-500">Route to senior compliance officer</p>
                         </div>
                       </div>
