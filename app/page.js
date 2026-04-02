@@ -581,7 +581,7 @@ function NotificationPanel({ alerts, onClose, onSelectAlert, onViewAll }) {
 }
 
 // Floating AI chat panel — asks Flagr AI about any transaction in plain English
-function AIChatPanel({ isOpen, onClose, selectedTransaction }) {
+function AIChatPanel({ isOpen, onClose, selectedTransaction, allTransactions = [] }) {
   const [messages, setMessages] = useState([
     { role: 'assistant', text: "Hi! I'm Flagr AI. Ask me anything about a transaction or fraud — I'll explain it in simple, plain English." }
   ]);
@@ -603,7 +603,19 @@ function AIChatPanel({ isOpen, onClose, selectedTransaction }) {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: trimmed, transaction: selectedTransaction }),
+        body: JSON.stringify({
+          message: trimmed,
+          transaction: selectedTransaction,
+          dashboardSummary: allTransactions.length > 0 ? {
+            total: allTransactions.length,
+            flagged: allTransactions.filter(t => t.risk_score >= 66).length,
+            topAlerts: allTransactions
+              .filter(t => t.risk_score >= 66)
+              .sort((a, b) => b.risk_score - a.risk_score)
+              .slice(0, 5)
+              .map(t => ({ id: t.transaction_id, merchant: t.merchant, location: t.location, riskScore: t.risk_score, amount: t.amount, status: t.status }))
+          } : null
+        }),
       });
       const data = await res.json();
       setMessages(prev => [...prev, { role: 'assistant', text: data.reply }]);
@@ -1291,6 +1303,7 @@ export default function Dashboard() {
         isOpen={chatOpen}
         onClose={() => setChatOpen(false)}
         selectedTransaction={selectedTransaction}
+        allTransactions={transactions}
       />
     </div>
   );

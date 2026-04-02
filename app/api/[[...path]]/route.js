@@ -135,22 +135,30 @@ export async function POST(request, { params }) {
   if (pathString === 'chat') {
     try {
       const body = await request.json();
-      const { message, transaction } = body;
+      const { message, transaction, dashboardSummary } = body;
 
       const hfToken = process.env.HF_TOKEN;
 
       if (!hfToken) {
-        // No HF token — use a simple rule-based explanation as fallback
         return NextResponse.json(
-          { reply: generateSimpleExplanation(message, transaction) },
+          { reply: generateSmartReply(message, transaction, dashboardSummary) },
           { headers: corsHeaders() }
         );
       }
 
-      // Build a plain-English prompt for the AI
-      const txnContext = transaction
-        ? `Transaction details: ID=${transaction.transaction_id}, Amount=$${parseFloat(transaction.amount || 0).toFixed(2)}, Location=${transaction.location}, Merchant=${transaction.merchant}, Risk Score=${transaction.risk_score || 'unknown'}/100, Status=${transaction.status || 'unknown'}.`
-        : 'No specific transaction selected.';
+      // Build context from whatever is available
+      let txnContext = '';
+      if (transaction) {
+        txnContext = `Selected transaction: ID=${transaction.transaction_id}, Amount=$${parseFloat(transaction.amount || 0).toFixed(2)}, Location=${transaction.location}, Merchant=${transaction.merchant}, Risk Score=${transaction.risk_score || 'unknown'}/100, Status=${transaction.status || 'unknown'}.`;
+      }
+      if (dashboardSummary) {
+        const alerts = dashboardSummary.topAlerts || [];
+        txnContext += ` Dashboard overview: ${dashboardSummary.total} total transactions, ${dashboardSummary.flagged} flagged as high risk.`;
+        if (alerts.length > 0) {
+          txnContext += ` Top flagged: ${alerts.map(a => `${a.id} (${a.merchant}, ${a.location}, score ${a.riskScore})`).join('; ')}.`;
+        }
+      }
+      if (!txnContext) txnContext = 'No specific transaction or dashboard data provided.';
 
       const prompt = `<|system|>You are Flagr AI, a friendly fraud analyst assistant for a bank. You explain things in simple, clear, everyday English — no jargon. Keep answers short (2–4 sentences). Be reassuring but honest.<|end|>\n<|user|>${txnContext}\n\nQuestion: ${message}<|end|>\n<|assistant|>`;
 
@@ -171,14 +179,14 @@ export async function POST(request, { params }) {
 
       if (!hfRes.ok) {
         return NextResponse.json(
-          { reply: generateSimpleExplanation(message, transaction) },
+          { reply: generateSmartReply(message, transaction, dashboardSummary) },
           { headers: corsHeaders() }
         );
       }
 
       const data = await hfRes.json();
       const raw = data[0]?.generated_text?.trim() || '';
-      const reply = raw || generateSimpleExplanation(message, transaction);
+      const reply = raw || generateSmartReply(message, transaction, dashboardSummary);
 
       return NextResponse.json({ reply }, { headers: corsHeaders() });
     } catch (error) {
@@ -196,26 +204,42 @@ export async function POST(request, { params }) {
   );
 }
 
-// Simple plain-English explanation fallback when HF_TOKEN is not set
-function generateSimpleExplanation(message, transaction) {
-  if (!transaction) {
-    return "I can help explain fraud patterns and transaction risk in simple English. Try selecting a specific transaction from the dashboard first, then ask me anything about it!";
+// Smart fallback reply — answers both specific transaction questions and general dashboard questions
+function generateSmartReply(message, transaction, dashboardSummary) {
+  const msg = (message || '').toLowerCase();
+
+  // General fraud / dashboard question
+  if (!transaction && dashboardSummary) {
+    const { total, flagged, topAlerts } = dashboardSummary;
+    if (flagged === 0) {
+      return `Good news — no high-risk transactions right now. All ${total} transactions in the system are currently at low or medium risk. Nothing needs immediate attention.`;
+    }
+    const topList = (topAlerts || [])
+      .map(a => `${a.id} (${a.merchant}, score ${a.riskScore}/100)`)
+      .join(', ');
+    return `Yes — out of ${total} transactions, ${flagged} are flagged as high or critical risk. The most urgent: ${topList}. Click any of these in the dashboard to open the full case and run a detailed analysis.`;
   }
 
-  const amount = parseFloat(transaction.amount) || 0;
-  const riskScore = transaction.risk_score || 0;
-  const location = transaction.location || 'Unknown';
-  const amountStr = `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  // Specific transaction question
+  if (transaction) {
+    const amount = parseFloat(transaction.amount) || 0;
+    const riskScore = transaction.risk_score || 0;
+    const location = transaction.location || 'Unknown';
+    const amountStr = `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-  if (riskScore >= 90) {
-    return `Transaction ${transaction.transaction_id} is flagged as CRITICAL (risk score ${riskScore}/100). In plain English — this ${amountStr} transaction has multiple serious red flags: it could be coming from a high-risk country like ${location}, happening at an unusual time, or going to a suspicious merchant. The account should be reviewed and possibly frozen immediately.`;
-  } else if (riskScore >= 66) {
-    return `Transaction ${transaction.transaction_id} is HIGH risk (score ${riskScore}/100). Something looks off about this ${amountStr} transaction — maybe the location (${location}), the merchant, or the timing triggered our fraud rules. A compliance officer should take a closer look before approving anything.`;
-  } else if (riskScore >= 41) {
-    return `Transaction ${transaction.transaction_id} has MEDIUM risk (score ${riskScore}/100). There are a couple of yellow flags — perhaps a slightly unusual amount or location — but nothing immediately alarming. It's worth keeping an eye on this account for more unusual activity.`;
-  } else {
-    return `Transaction ${transaction.transaction_id} looks clean — low risk score of ${riskScore}/100. The amount (${amountStr}), location (${location}), timing, and merchant all check out as normal. No action needed right now.`;
+    if (riskScore >= 90) {
+      return `Transaction ${transaction.transaction_id} is CRITICAL risk (${riskScore}/100). This ${amountStr} payment has multiple serious red flags — the location (${location}), merchant type, or timing triggered our highest-severity rules. The account should be reviewed and likely frozen immediately.`;
+    } else if (riskScore >= 66) {
+      return `Transaction ${transaction.transaction_id} is HIGH risk (${riskScore}/100). Something is off about this ${amountStr} payment — the location (${location}), merchant, or timing looks suspicious. A compliance officer should review this before it clears.`;
+    } else if (riskScore >= 41) {
+      return `Transaction ${transaction.transaction_id} has MEDIUM risk (${riskScore}/100). There are a couple of yellow flags but nothing alarming. Worth monitoring this account for further unusual activity.`;
+    } else {
+      return `Transaction ${transaction.transaction_id} looks clean — risk score ${riskScore}/100. The amount (${amountStr}), location (${location}), timing, and merchant all check out normally. No action needed.`;
+    }
   }
+
+  // No context at all
+  return `I can answer questions about specific transactions or give you an overview of what's flagged right now. Try asking "is there any fraud today?" or click on a transaction first and ask me about it.`;
 }
 
 // Generate analysis that combines rule engine output with signal-based scoring
