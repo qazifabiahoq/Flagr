@@ -25,7 +25,7 @@ Flagr is a B2B fraud intelligence platform that takes a bank transaction and ret
 
 Every transaction runs through two layers of analysis:
 
-1. A deterministic rule engine that checks the transaction against a library of regulation-mapped compliance rules instantly.
+1. A deterministic rule engine that checks the transaction against a library of 34 regulation-mapped compliance rules across seven categories, evaluated in under a millisecond.
 2. A four-agent AI pipeline that reasons over the rule results, generates a compliance report, and recommends a specific action.
 
 The compliance officer sees a live dashboard of all transactions, each pre-scored by risk level. When they click Analyze on any transaction, the rule engine fires first, then four specialized AI agents work through the results in sequence. By the time the pipeline finishes, the output is a professional report with anomaly scoring, plain-English reasoning, regulatory compliance flags, and a clear recommended action the bank can act on immediately.
@@ -36,7 +36,7 @@ The compliance officer sees a live dashboard of all transactions, each pre-score
 
 The rule engine is the first layer of analysis. It is deterministic, auditable, and fast. Every transaction is evaluated against every rule in under a millisecond.
 
-Rules are organized into six categories:
+Rules are organized into seven categories:
 
 **Amount Threshold Rules**
 
@@ -60,7 +60,11 @@ These rules operate at the intersection of multiple factors. A transaction of $5
 
 **Device and IP Rules**
 
-These rules check the device IP against known datacenter, VPN, and hosting provider ranges. Legitimate retail customers connect from residential or mobile IPs. Commercial IPs suggest proxied or automated activity. Non-residential IPs are flagged at lower severity as a contextual signal.
+These rules check the device IP against known datacenter, VPN, and hosting provider ranges. Legitimate retail customers connect from residential or mobile IPs. Commercial IPs suggest proxied or automated activity. Non-residential IPs are flagged at lower severity as a contextual signal. Transactions routed through known TOR exit nodes or anonymizing proxies trigger a high-severity rule because legitimate banking customers almost never use anonymizing networks for financial transactions.
+
+**Velocity and Behavior Rules**
+
+These rules catch behavioral patterns that suggest fraud even when individual transaction attributes look normal. A transaction under $1.00 is a strong card testing signal — fraudsters run a micro-charge to confirm a stolen card is active before making larger purchases. Transaction amounts that fall within 5% below a common review threshold ($1,000, $3,000, or $5,000) are flagged as potential split structuring. Peer-to-peer payment platforms like Venmo, CashApp, and Zelle are flagged because they are increasingly used for rapid fund layering. NFT marketplaces are flagged because FinCEN and the FATF have identified them as an emerging money laundering vehicle. Gift card and prepaid card loading is flagged as a high-risk cash-equivalent conversion method. Merchant names matching shell company patterns trigger a medium-severity rule under the FinCEN beneficial ownership requirements.
 
 ### How Scoring Works
 
@@ -128,6 +132,24 @@ Flagr is a full-stack web platform with a Next.js 14 frontend deployed on Vercel
 The rule engine runs entirely in the Next.js API layer with no external dependencies. It evaluates all rules on every transaction in a single synchronous pass. The four AI agents are orchestrated using Google ADK's LlmAgent and Runner pattern. Each agent runs on Gemini 2.5 Flash with a custom instruction set that defines its role, required output structure, and strict behavioral constraints.
 
 The transaction data is sourced from the Kaggle Credit Card Fraud Detection dataset.
+
+---
+
+## Flagr AI Assistant
+
+One of the persistent failure modes in compliance tooling is that the output is written for systems, not for people. Rule codes, severity scores, and regulation references are necessary for audit trails, but they do not help a junior analyst understand what they are actually looking at or why it matters.
+
+Flagr includes a conversational AI assistant that is present on every page of the dashboard. It is accessible through a persistent button in the bottom-right corner. The assistant is designed to translate everything on the screen into plain, accessible language. An analyst can ask why a transaction was flagged, what a particular risk score means in practical terms, what a regulation reference requires the bank to do, or whether a specific combination of signals is unusual. The assistant answers in straightforward English without jargon.
+
+When the analyst has a transaction open in the case investigation drawer, the assistant receives full context on that transaction automatically — the ID, amount, location, merchant, and risk score. Every response is specific to the transaction being reviewed, not generic.
+
+The assistant uses the HuggingFace Inference API with `HuggingFaceH4/zephyr-7b-beta`, a free open-weight instruction-tuned model. To enable AI responses, add a `HF_TOKEN` environment variable containing a HuggingFace account token. Tokens are free to obtain from huggingface.co. If no token is configured, the assistant falls back to a deterministic rule-based explanation derived directly from the transaction's risk score and signals. The fallback produces accurate, context-aware responses without any external API dependency.
+
+---
+
+## Alert Notifications
+
+The notification system surfaces high-risk activity directly in the header without requiring the analyst to navigate to a separate page. The bell icon displays a live count of all transactions currently at HIGH or CRITICAL risk. Clicking the icon opens a panel listing each alert with the transaction ID, risk level, and merchant. Every item in the panel is a direct link — clicking it navigates immediately to the dashboard view for that transaction and opens the full case investigation drawer. A secondary action in the panel jumps to the dedicated Alerts tab where all high-risk transactions are listed together.
 
 ---
 

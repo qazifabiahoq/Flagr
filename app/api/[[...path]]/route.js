@@ -131,10 +131,91 @@ export async function POST(request, { params }) {
     }
   }
 
+  // AI chat endpoint - explains transactions in plain English using HuggingFace
+  if (pathString === 'chat') {
+    try {
+      const body = await request.json();
+      const { message, transaction } = body;
+
+      const hfToken = process.env.HF_TOKEN;
+
+      if (!hfToken) {
+        // No HF token — use a simple rule-based explanation as fallback
+        return NextResponse.json(
+          { reply: generateSimpleExplanation(message, transaction) },
+          { headers: corsHeaders() }
+        );
+      }
+
+      // Build a plain-English prompt for the AI
+      const txnContext = transaction
+        ? `Transaction details: ID=${transaction.transaction_id}, Amount=$${parseFloat(transaction.amount || 0).toFixed(2)}, Location=${transaction.location}, Merchant=${transaction.merchant}, Risk Score=${transaction.risk_score || 'unknown'}/100, Status=${transaction.status || 'unknown'}.`
+        : 'No specific transaction selected.';
+
+      const prompt = `<|system|>You are Flagr AI, a friendly fraud analyst assistant for a bank. You explain things in simple, clear, everyday English — no jargon. Keep answers short (2–4 sentences). Be reassuring but honest.<|end|>\n<|user|>${txnContext}\n\nQuestion: ${message}<|end|>\n<|assistant|>`;
+
+      const hfRes = await fetch(
+        'https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${hfToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            inputs: prompt,
+            parameters: { max_new_tokens: 200, return_full_text: false, temperature: 0.7 },
+          }),
+        }
+      );
+
+      if (!hfRes.ok) {
+        return NextResponse.json(
+          { reply: generateSimpleExplanation(message, transaction) },
+          { headers: corsHeaders() }
+        );
+      }
+
+      const data = await hfRes.json();
+      const raw = data[0]?.generated_text?.trim() || '';
+      const reply = raw || generateSimpleExplanation(message, transaction);
+
+      return NextResponse.json({ reply }, { headers: corsHeaders() });
+    } catch (error) {
+      console.error('Chat error:', error);
+      return NextResponse.json(
+        { reply: "Sorry, I couldn't process that right now. Please try again." },
+        { status: 500, headers: corsHeaders() }
+      );
+    }
+  }
+
   return NextResponse.json(
     { error: 'Not found' },
     { status: 404, headers: corsHeaders() }
   );
+}
+
+// Simple plain-English explanation fallback when HF_TOKEN is not set
+function generateSimpleExplanation(message, transaction) {
+  if (!transaction) {
+    return "I can help explain fraud patterns and transaction risk in simple English. Try selecting a specific transaction from the dashboard first, then ask me anything about it!";
+  }
+
+  const amount = parseFloat(transaction.amount) || 0;
+  const riskScore = transaction.risk_score || 0;
+  const location = transaction.location || 'Unknown';
+  const amountStr = `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  if (riskScore >= 90) {
+    return `Transaction ${transaction.transaction_id} is flagged as CRITICAL (risk score ${riskScore}/100). In plain English — this ${amountStr} transaction has multiple serious red flags: it could be coming from a high-risk country like ${location}, happening at an unusual time, or going to a suspicious merchant. The account should be reviewed and possibly frozen immediately.`;
+  } else if (riskScore >= 66) {
+    return `Transaction ${transaction.transaction_id} is HIGH risk (score ${riskScore}/100). Something looks off about this ${amountStr} transaction — maybe the location (${location}), the merchant, or the timing triggered our fraud rules. A compliance officer should take a closer look before approving anything.`;
+  } else if (riskScore >= 41) {
+    return `Transaction ${transaction.transaction_id} has MEDIUM risk (score ${riskScore}/100). There are a couple of yellow flags — perhaps a slightly unusual amount or location — but nothing immediately alarming. It's worth keeping an eye on this account for more unusual activity.`;
+  } else {
+    return `Transaction ${transaction.transaction_id} looks clean — low risk score of ${riskScore}/100. The amount (${amountStr}), location (${location}), timing, and merchant all check out as normal. No action needed right now.`;
+  }
 }
 
 // Generate analysis that combines rule engine output with signal-based scoring
