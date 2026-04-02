@@ -160,7 +160,7 @@ export async function POST(request, { params }) {
       }
       if (!txnContext) txnContext = 'No specific transaction or dashboard data provided.';
 
-      const prompt = `<|system|>You are Flagr AI, a friendly fraud analyst assistant for a bank. You explain things in simple, clear, everyday English — no jargon. Keep answers short (2–4 sentences). Be reassuring but honest.<|end|>\n<|user|>${txnContext}\n\nQuestion: ${message}<|end|>\n<|assistant|>`;
+      const prompt = `<|system|>You are Flagr AI, a friendly fraud analyst assistant for a bank. You explain things in simple, clear, everyday English -  no jargon. Keep answers short (2–4 sentences). Be reassuring but honest.<|end|>\n<|user|>${txnContext}\n\nQuestion: ${message}<|end|>\n<|assistant|>`;
 
       const hfRes = await fetch(
         'https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta',
@@ -204,7 +204,7 @@ export async function POST(request, { params }) {
   );
 }
 
-// Smart fallback reply — answers both specific transaction questions and general dashboard questions
+// Smart fallback reply -  answers both specific transaction questions and general dashboard questions
 function generateSmartReply(message, transaction, dashboardSummary) {
   const msg = (message || '').toLowerCase();
 
@@ -212,12 +212,12 @@ function generateSmartReply(message, transaction, dashboardSummary) {
   if (!transaction && dashboardSummary) {
     const { total, flagged, topAlerts } = dashboardSummary;
     if (flagged === 0) {
-      return `Good news — no high-risk transactions right now. All ${total} transactions in the system are currently at low or medium risk. Nothing needs immediate attention.`;
+      return `Good news -  no high-risk transactions right now. All ${total} transactions in the system are currently at low or medium risk. Nothing needs immediate attention.`;
     }
     const topList = (topAlerts || [])
       .map(a => `${a.id} (${a.merchant}, score ${a.riskScore}/100)`)
       .join(', ');
-    return `Yes — out of ${total} transactions, ${flagged} are flagged as high or critical risk. The most urgent: ${topList}. Click any of these in the dashboard to open the full case and run a detailed analysis.`;
+    return `Yes -  out of ${total} transactions, ${flagged} are flagged as high or critical risk. The most urgent: ${topList}. Click any of these in the dashboard to open the full case and run a detailed analysis.`;
   }
 
   // Specific transaction question
@@ -228,13 +228,13 @@ function generateSmartReply(message, transaction, dashboardSummary) {
     const amountStr = `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
     if (riskScore >= 90) {
-      return `Transaction ${transaction.transaction_id} is CRITICAL risk (${riskScore}/100). This ${amountStr} payment has multiple serious red flags — the location (${location}), merchant type, or timing triggered our highest-severity rules. The account should be reviewed and likely frozen immediately.`;
+      return `Transaction ${transaction.transaction_id} is CRITICAL risk (${riskScore}/100). This ${amountStr} payment has multiple serious red flags -  the location (${location}), merchant type, or timing triggered our highest-severity rules. The account should be reviewed and likely frozen immediately.`;
     } else if (riskScore >= 66) {
-      return `Transaction ${transaction.transaction_id} is HIGH risk (${riskScore}/100). Something is off about this ${amountStr} payment — the location (${location}), merchant, or timing looks suspicious. A compliance officer should review this before it clears.`;
+      return `Transaction ${transaction.transaction_id} is HIGH risk (${riskScore}/100). Something is off about this ${amountStr} payment -  the location (${location}), merchant, or timing looks suspicious. A compliance officer should review this before it clears.`;
     } else if (riskScore >= 41) {
       return `Transaction ${transaction.transaction_id} has MEDIUM risk (${riskScore}/100). There are a couple of yellow flags but nothing alarming. Worth monitoring this account for further unusual activity.`;
     } else {
-      return `Transaction ${transaction.transaction_id} looks clean — risk score ${riskScore}/100. The amount (${amountStr}), location (${location}), timing, and merchant all check out normally. No action needed.`;
+      return `Transaction ${transaction.transaction_id} looks clean -  risk score ${riskScore}/100. The amount (${amountStr}), location (${location}), timing, and merchant all check out normally. No action needed.`;
     }
   }
 
