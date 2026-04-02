@@ -25,7 +25,7 @@ Flagr is a B2B fraud intelligence platform that takes a bank transaction and ret
 
 Every transaction runs through two layers of analysis:
 
-1. A deterministic rule engine that checks the transaction against a library of regulation-mapped compliance rules instantly.
+1. A deterministic rule engine that checks the transaction against a library of 34 regulation-mapped compliance rules across seven categories, evaluated in under a millisecond.
 2. A four-agent AI pipeline that reasons over the rule results, generates a compliance report, and recommends a specific action.
 
 The compliance officer sees a live dashboard of all transactions, each pre-scored by risk level. When they click Analyze on any transaction, the rule engine fires first, then four specialized AI agents work through the results in sequence. By the time the pipeline finishes, the output is a professional report with anomaly scoring, plain-English reasoning, regulatory compliance flags, and a clear recommended action the bank can act on immediately.
@@ -137,17 +137,19 @@ The transaction data is sourced from the Kaggle Credit Card Fraud Detection data
 
 ## Flagr AI Assistant
 
-Every page of the dashboard has a floating chat button in the bottom-right corner. Click it to open the Flagr AI assistant. You can ask it anything about a transaction or about fraud detection in general, and it will respond in simple, plain English — no jargon.
+One of the persistent failure modes in compliance tooling is that the output is written for systems, not for people. Rule codes, severity scores, and regulation references are necessary for audit trails, but they do not help a junior analyst understand what they are actually looking at or why it matters.
 
-When you have a transaction open in the case drawer, the AI automatically has context on that transaction. You can ask things like "why is this suspicious?" or "what does this risk score mean?" and it will answer specifically about the transaction you are looking at.
+Flagr includes a conversational AI assistant that is present on every page of the dashboard. It is accessible through a persistent button in the bottom-right corner. The assistant is designed to translate everything on the screen into plain, accessible language. An analyst can ask why a transaction was flagged, what a particular risk score means in practical terms, what a regulation reference requires the bank to do, or whether a specific combination of signals is unusual. The assistant answers in straightforward English without jargon.
 
-The AI uses the HuggingFace Inference API with `HuggingFaceH4/zephyr-7b-beta`. Add a `HF_TOKEN` environment variable with a free HuggingFace account token to enable it. Without a token it falls back to a simple rule-based explanation.
+When the analyst has a transaction open in the case investigation drawer, the assistant receives full context on that transaction automatically — the ID, amount, location, merchant, and risk score. Every response is specific to the transaction being reviewed, not generic.
+
+The assistant uses the HuggingFace Inference API with `HuggingFaceH4/zephyr-7b-beta`, a free open-weight instruction-tuned model. To enable AI responses, add a `HF_TOKEN` environment variable containing a HuggingFace account token. Tokens are free to obtain from huggingface.co. If no token is configured, the assistant falls back to a deterministic rule-based explanation derived directly from the transaction's risk score and signals. The fallback produces accurate, context-aware responses without any external API dependency.
 
 ---
 
-## Notifications
+## Alert Notifications
 
-The bell icon in the header shows a count of all high-risk transactions currently in the system. Clicking it opens a dropdown that lists each alert by transaction ID, risk level, and merchant. Clicking any notification takes you directly to that transaction's case view. There is also a button to jump to the full Alerts tab.
+The notification system surfaces high-risk activity directly in the header without requiring the analyst to navigate to a separate page. The bell icon displays a live count of all transactions currently at HIGH or CRITICAL risk. Clicking the icon opens a panel listing each alert with the transaction ID, risk level, and merchant. Every item in the panel is a direct link — clicking it navigates immediately to the dashboard view for that transaction and opens the full case investigation drawer. A secondary action in the panel jumps to the dedicated Alerts tab where all high-risk transactions are listed together.
 
 ---
 
